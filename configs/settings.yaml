@@ -13,14 +13,18 @@ cleaning:                    # 四步清洗，顺序不可交换（AGENTS.md 第
   adr_max: 1000              # 超过视为录入异常（本项目最贵一间 5,400）
   keep_duplicate: first      # 去重时保留哪一条：first = booking_id 最小者
 
-quality:                     # 16 项检查的判定阈值
+quality:                     # 16 项检查的判定阈值（每一条都对应 checks.py 里的一处判断）
   pass_threshold: 0.01       # 问题比例低于 1% 判“通过”（0.41% 的 country 缺失即由此通过）
   high_missing: 0.50         # 单字段缺失率超过 50% 判“不通过”（company_id 94.31%）
-  dup_rate_warn: 0.30        # 完全重复率预警线（实测 26.80%，未触发）
-  adr_bad_warn: 0.02         # 房价异常率预警线（实测 1.64%，未触发）
+  dup_rate_fail: 0.10        # 完全重复率超过 10% 判“不通过”（实测 26.80%）
+  adr_bad_fail: 0.01         # 房价异常率超过 1% 判“不通过”（实测 1.64%）
+  lead_time_extreme_warn: 0.05   # 提前期超 365 天的占比不超过 5% 判“通过”（实测 2.64%）
+  top_country_share_fail: 0.30   # 单一客源国占比超过 30% 判“不通过”（葡萄牙 40.7%）
+  min_hotels: 3              # 少于 3 家酒店判“不通过”（实测 2 家）
 
 reporting:
   analysis_start: "2015-07-01"
   analysis_end: "2017-08-31"
   complete_year: 2016        # 唯一完整的自然年：只有它可做整年同比
   top_country_n: 10          # 客源国图取前几
+  lead_time_bin_max: 365     # 提前期分箱的末段边界（DQ-12）
