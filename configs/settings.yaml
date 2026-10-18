@@ -1,0 +1,26 @@
+# configs/settings.yaml —— 业务参数的唯一来源（AGENTS.md 第 8 条）
+# 改参数改这里，不改代码；代码里不写 1000、30% 这类业务数字。
+# 一律 UTF-8 保存（Windows 记事本另存为时选 UTF-8）。
+version: "1.0"
+
+source:
+  table: bookings
+  expected_rows: 119390      # 入库对账基线：与 CSV 行数一致，变了下游全部要重算
+  business_cols: 32          # 业务字段数（不含 booking_id 与 4 个派生列）
+
+cleaning:                    # 四步清洗，顺序不可交换（AGENTS.md 第 2 条 / docs/需求规格.md 5.1）
+  adr_min: 0                 # 房价必须 > adr_min
+  adr_max: 1000              # 超过视为录入异常（本项目最贵一间 5,400）
+  keep_duplicate: first      # 去重时保留哪一条：first = booking_id 最小者
+
+quality:                     # 16 项检查的判定阈值
+  pass_threshold: 0.01       # 问题比例低于 1% 判“通过”（0.41% 的 country 缺失即由此通过）
+  high_missing: 0.50         # 单字段缺失率超过 50% 判“不通过”（company_id 94.31%）
+  dup_rate_warn: 0.30        # 完全重复率预警线（实测 26.80%，未触发）
+  adr_bad_warn: 0.02         # 房价异常率预警线（实测 1.64%，未触发）
+
+reporting:
+  analysis_start: "2015-07-01"
+  analysis_end: "2017-08-31"
+  complete_year: 2016        # 唯一完整的自然年：只有它可做整年同比
+  top_country_n: 10          # 客源国图取前几
