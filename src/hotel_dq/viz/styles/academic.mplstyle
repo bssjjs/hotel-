@@ -1,0 +1,18 @@
+# academic：给 Word 报告与打印用。四面边框、刻度朝内、不画网格、线更细、字号小一号
+axes.spines.top: True
+axes.spines.right: True
+axes.spines.left: True
+axes.grid: False
+axes.edgecolor: "#1F2937"
+axes.linewidth: 0.6
+xtick.direction: in
+ytick.direction: in
+xtick.top: True
+ytick.right: True
+xtick.major.size: 3
+ytick.major.size: 3
+lines.linewidth: 1.4
+figure.titlesize: 13
+axes.titlesize: 10
+legend.fontsize: 8.5
+font.size: 9

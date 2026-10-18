@@ -1,0 +1,15 @@
+# business：给汇报 PPT 与展示平台用。线条更粗、线端圆头、子图标题加粗，投影到大屏也看得清
+lines.linewidth: 2.6
+lines.solid_capstyle: round
+lines.dash_capstyle: round
+axes.titlesize: 11.5
+axes.titleweight: bold
+axes.grid: True
+axes.grid.axis: y
+grid.color: "#EEF0F3"
+grid.linewidth: 1
+figure.titlesize: 17
+legend.fontsize: 10
+font.size: 10.5
+xtick.labelsize: 10.5
+ytick.labelsize: 10.5

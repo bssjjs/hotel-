@@ -1,0 +1,61 @@
+# 项目基线：每次切换主题都先套它，再套主题文件（见 theme.apply_theme）。
+# 为什么要有基线：plt.style.use 只改文件里写到的键。academic 改了刻度方向，
+# 如果不先回到基线，再切 business 时刻度方向会留在 academic 的样子。
+# 规则：任何一个主题改到的键，这里都要写一个值。
+
+# —— 字体：只用开源字体（AGENTS.md 12.3），中文用思源黑体，缺字形由 DejaVu 补负号与上下标
+font.family: Noto Sans CJK SC, Noto Serif CJK SC, TeX Gyre Termes, DejaVu Sans
+axes.unicode_minus: True
+mathtext.fontset: dejavusans
+
+# —— 颜色（和 theme.py 的语义色同一套值）
+text.color: "#1F2937"
+axes.labelcolor: "#1F2937"
+axes.titlecolor: "#1F2937"
+axes.edgecolor: "#9CA3AF"
+xtick.color: "#4B5563"
+ytick.color: "#4B5563"
+grid.color: "#E5E7EB"
+figure.facecolor: "#FFFFFF"
+axes.facecolor: "#FFFFFF"
+savefig.facecolor: "#FFFFFF"
+# 分类色：蓝色由深到浅，色相不跳（见 theme.BLUES）
+axes.prop_cycle: cycler("color", ["#174E73", "#1D6FA5", "#4A93C4", "#7FB3D9", "#A9CDE6"])
+image.cmap: Blues          # 连续数值用单色渐变
+
+# —— 坐标轴：只留底边，横向网格，网格在数据下面
+axes.spines.top: False
+axes.spines.right: False
+axes.spines.left: False
+axes.linewidth: 0.8
+axes.grid: True
+axes.grid.axis: y
+axes.axisbelow: True
+axes.titleweight: normal
+xtick.major.size: 0
+ytick.major.size: 0
+xtick.major.width: 0.8
+ytick.major.width: 0.8
+xtick.direction: out
+ytick.direction: out
+xtick.top: False
+ytick.right: False
+
+# —— 字号（磅）：标题 16、副标题 10.5、刻度与标签 10–10.5、来源行 8.5
+font.size: 10
+figure.titlesize: 16
+figure.titleweight: bold
+axes.titlesize: 10.5
+axes.labelsize: 10.5
+xtick.labelsize: 10
+ytick.labelsize: 10
+legend.fontsize: 9.5
+legend.frameon: False
+lines.linewidth: 2
+lines.markersize: 4
+patch.linewidth: 0
+
+# —— 画布
+figure.dpi: 100
+savefig.dpi: 300
+figure.autolayout: False
