@@ -95,8 +95,12 @@ def write_clean_steps(con, steps: list[dict], n_raw: int) -> int:
 
 @step
 def audit(raw, settings):
-    """16 项检查（DQ-01—DQ-16）。检查原始层，不是清洗后的数据。"""
-    return checks.run_all(raw, settings)
+    """16 项检查（DQ-01—DQ-16）。检查原始层，不是清洗后的数据。
+
+    先把缺失的派生列补齐：真实库里入库脚本已经算好，合成库没有；
+    checks 依赖 arrival_date 等派生列，但绝不依赖清洗结果（否则检查与清洗互相牵连）。
+    """
+    return checks.run_all(dwd.with_derived(raw), settings)
 
 
 @step
