@@ -1,12 +1,12 @@
 [project]
 name = "hotel-insight"
 version = "2.0.0"
-description = "酒店预订数据集的数据质量评估：字段画像、16 项稽核、四步清洗与可追溯流水线"
+description = "酒店预订数据的业务洞察：客源、时间、房型与取消归因，区分结构性因素与可干预因素"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "一班第十二组" }]
-keywords = ["数据质量", "酒店预订", "pandas", "matplotlib", "teaching"]
+keywords = ["酒店预订", "取消归因", "结构分解", "数据洞察", "pandas", "matplotlib"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
