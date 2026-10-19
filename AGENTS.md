@@ -5,8 +5,9 @@
 
 ## 0 项目一句话
 
-用 `data/hotel.db` 里的 119,390 条酒店预订记录，回答“这份数据能不能直接用来做取消预测与收益分析”，
-并把评估做成**每天能重跑、坏数据进不来、每个数字可追溯**的系统。
+用 `data/hotel.db` 里的 119,390 条酒店预订记录，回答"客人从哪来、什么时候来、房型由什么决定、
+取消和什么有关"，并判断**哪些是结构性的、哪些真能干预**；
+工程上要求**每天能重跑、坏数据进不来、每个数字可追溯**。
 
 ## 1 数据与合规【D01】
 
@@ -31,6 +32,11 @@
 | 16 项检查的定义变了 | `src/hotel_insight/checks.py` |
 | 稽核记录、字段画像的格式变了 | `src/hotel_insight/quality.py` |
 | 流水线的步骤编排变了 | `src/hotel_insight/pipeline.py` |
+| 客源国怎么算集中度、怎么合并"其他" | `src/hotel_insight/origin.py` |
+| 季节指数、提前期分档、同月可比的认法 | `src/hotel_insight/timing.py` |
+| 房型规模、换房流向、房型 × 客源 | `src/hotel_insight/room.py` |
+| 12 个取消因素的定义与可干预性判断 | `src/hotel_insight/cancel.py` |
+| 置信区间、Kitagawa 分解的算法 | `src/hotel_insight/rate.py` |
 | 图表规范变了 | `src/hotel_insight/viz/` |
 | 只用一次的探索 | 留在 notebook 里，不收 |
 
@@ -40,20 +46,20 @@
 
 ```
 notebooks/
-    ↓
-pipeline   checks
-    ↓
-quality    dwd    viz
-    ↓
-db    geo(无)
-    ↓
-config
+    ├─ pipeline ── db ──────────┐
+    ├─ checks ──── dwd ─────────┤
+    ├─ quality ─── db ──────────┤
+    ├─ origin / timing / room / cancel / rate ──┤   （纯计算，只吃 DataFrame）
+    └─ viz ─────────────────────┤
+                                config
 ```
 
 3.1 上层可以 import 下层，下层永远不 import 上层。
 3.2 `config` 是最底层，不 import 项目里的任何模块。
 3.3 `src/` 里任何文件都不 import `notebooks/`。
-3.4 `viz` 只依赖 `config`；`dwd`、`checks`、`quality` 不 import `viz`（算数的地方不出图）。
+3.4 `viz` 只依赖 `config`；`dwd`、`checks`、`quality`、`origin`、`timing`、`room`、`cancel` 不 import `viz`（算数的地方不出图）。
+3.5 五个分析模块（`origin` / `timing` / `room` / `cancel` / `rate`）**不连库、不读文件**：
+   入参是 DataFrame 与 `settings`，出参是 DataFrame 或 dict。`rate` 谁都不依赖，只依赖 pandas——它是算法，不是业务。
 
 **理由**：依赖只往一个方向走，改底层时知道会影响谁；循环依赖会让“先 import 谁”决定程序能不能跑。
 
@@ -62,6 +68,8 @@ config
 4.1 `dwd.clean_bookings`、`quality.profile`、`checks.run_all` 只接收 DataFrame 和参数，**不读库、不写库、不读文件**。
 4.2 读库、写库只发生在 `db.py` 和 `pipeline.py`；`quality.dq_record` 是唯一例外（它要把结论写进稽核表）。
 4.3 函数需要外部状态时加参数，不使用 notebook 里的全局变量。
+4.4 分析模块（`origin` / `timing` / `room` / `cancel` / `rate`）同样只吃 DataFrame，
+   **不在模块里 `pd.read_sql`**。读库在 notebook 开头做一次，之后传 DataFrame——这样同一份数据可以喂给三个模块对账。
 
 **理由**：纯函数用几个合成行就能测；测试不需要先准备一个数据库。
 
@@ -73,7 +81,7 @@ config
 | --- | --- | --- |
 | `ods_` | 原始层 | 数据平台同步来的原样数据，只读（本项目对应 `bookings`） |
 | `dwd_` | 明细层 | 派生列补齐、清洗后的明细，按到达月分区 |
-| `dws_` | 汇总层 | 按月、按渠道、按细分汇总（D03 起） |
+| `dws_` | 汇总层 | 按月、按渠道、按细分汇总（分析阶段在 notebook 内现算，暂不落库；落库时用这个前缀） |
 | `ads_` | 应用层 | 直接给图表、报告用的结果 |
 | `dq_` | 稽核层 | 16 项检查的结论，`dq_check_result` |
 
@@ -84,7 +92,8 @@ config
 6.1 变量、函数、模块用英文，小写加下划线。中文放在注释、文档、图上的文字、表里的值。
 6.2 模块名是名词，说清它管什么。**不准建 `utils.py`、`common.py`、`helper.py`、`misc.py`**。
 6.3 包名 `hotel_insight`（import 用），发行名 `hotel-insight`（pip 用）。
-6.4 notebook 用两位编号：`D01-数据接入与字段画像.ipynb`。不补零会排成 D1、D10、D2。
+6.4 notebook 用两位编号加中文主题：`D01-口径与底座.ipynb`、`D02-客人从哪来.ipynb`。不补零会排成 D1、D10、D2。
+   编号是阅读顺序，也是"口径的依赖顺序"——后面的本子默认前面的口径已经钉死，不再重复解释。
 
 **理由**：名字是给人看的索引；杂物抽屉式的文件名，半年后没人敢删。
 
@@ -109,6 +118,12 @@ import 一个模块时，不连数据库、不改 `rcParams`、不读文件、�
 12.3 只用开源字体（思源黑体、思源宋体、TeX Gyre Termes、DejaVu Sans），代码里不出现商业字体名。
 12.4 **本项目以蓝色为主调**：同一含义在所有图里同一个蓝，分类色也用蓝色系明度梯度；红只表示警示，绿只表示通过。
 12.5 单色渐变、不用彩虹色阶；柱状图纵轴从 0 开始；不用双 Y 轴、3D、超过 5 块的饼图。
+12.6 图型只有 `viz/charts.py` 里那八种（`hbar` / `grouped_hbar` / `share_bar` / `heat` / `pareto` /
+   `waterfall` / `dumbbell` / `quadrant`）。要画第八种以外的形状，先问"是不是能用已有的拼出来"；
+   真要新增，写成函数放进 `charts.py`，docstring 写清"这个形状回答了什么问题"，**不在 notebook 里手搓 plot**。
+12.7 notebook 出图固定四段式，顺序不能换：① 算指标（标题里的数字在这里算出）
+   → ② 画图 → ③ `viz.finish` → ④ 读回断言 + `plt.show()`。
+   读回断言必须写在 `finish()` **之后**——标题是 `finish` 加的，写在前面 `fig.texts[0]` 还不存在（D01 踩过）。
 
 ## 14 Git【D01】
 
@@ -127,7 +142,8 @@ import 一个模块时，不连数据库、不改 `rcParams`、不读文件、�
 | `analysis` | notebook 分析进展 |
 
 14.3 不习惯性地 `git add .`：先 `git status`，再点名要提交的文件。
-14.4 里程碑打标签：`v0.1`（骨架可跑）、`v0.2`（16 项检查 + 清洗）、`v1.0`（报告对齐）。
+14.4 里程碑打标签：`v0.1`（骨架可跑）、`v0.2`（16 项检查 + 清洗）、`v1.0`（报告对齐）、
+   `v2.0`（五问分析 + 六本 notebook）。标签打在"能整本重跑通过"的提交上，不是打在"写完了"的提交上。
 
 ## 15 给编程智能体的约定【D02】
 
