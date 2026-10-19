@@ -24,8 +24,8 @@ from matplotlib.patches import Rectangle
 
 from .theme import BLUES, FAINT, GRAY, GRAY_DARK, INK, MAIN, MAIN_DARK, MAIN_LIGHT, MAIN_MID, RED
 
-__all__ = ["BLUE_CMAP", "hbar", "share_bar", "heat", "pareto", "waterfall",
-           "dumbbell", "quadrant", "fmt_pct", "fmt_k"]
+__all__ = ["BLUE_CMAP", "hbar", "grouped_hbar", "share_bar", "heat", "pareto",
+           "waterfall", "dumbbell", "quadrant", "fmt_pct", "fmt_k"]
 
 # 单色蓝渐变：浅底 → 深蓝。不用彩虹色阶（第 12.5 条）：
 # 彩虹色阶在灰度打印时顺序会乱，而深浅蓝不会。
@@ -80,6 +80,40 @@ def hbar(ax, labels, values, *, errors=None, colors=None, value_fmt="{:,.0f}",
             ax.text(v + span * pad_ratio, yi, value_fmt.format(v), va="center",
                     ha="left", fontsize=label_size, color=INK)
         ax.set_xlim(0, np.nanmax(vals) * (1 + pad_ratio * 4))
+
+
+def grouped_hbar(ax, labels, series, *, colors=None, value_fmt="{:+.1f}",
+                 label_size=8.5, height=0.34, zero_line=True):
+    """分组横向条形：每个 label 一组，series 里每个键一根条。
+
+    用来放"同一个分组在两个口径下的值"（例如结构效应 vs 组内效应）。
+    与 dumbbell 的分工：哑铃适合"两个时点的同一个量"，分组条适合"两个不同含义的量"。
+
+    条末端标数值：正的标在右边、负的标在左边，否则负数标签会压在零线上。
+    """
+    n = len(series)
+    y = np.arange(len(labels))
+    span = (np.arange(n) - (n - 1) / 2) * height
+    cols = colors if colors is not None else BLUES
+    for i, (name, vals) in enumerate(series.items()):
+        v = np.asarray(vals, dtype=float)
+        ax.barh(y + span[i], v, height=height, color=cols[i % len(cols)],
+                label=str(name), zorder=2)
+        for yi, vi in zip(y + span[i], v):
+            ax.text(vi + (0.15 if vi >= 0 else -0.15), yi, value_fmt.format(vi),
+                    va="center", ha="left" if vi >= 0 else "right",
+                    fontsize=label_size, color=INK)
+    ax.set_yticks(y, labels)
+    ax.invert_yaxis()
+    if zero_line:
+        ax.axvline(0, color=GRAY_DARK, linewidth=1, zorder=1)
+    # 两侧留白给条末标签：负值的标签写在左边，不留白会被裁掉
+    lo, hi = float(min(0, np.nanmin([np.min(v) for v in series.values()]))), \
+        float(max(0, np.nanmax([np.max(v) for v in series.values()])))
+    span = hi - lo
+    ax.set_xlim(lo - span * 0.18, hi + span * 0.18)
+    ax.grid(False)
+    ax.legend(frameon=False, fontsize=9, loc="upper left")
 
 
 def share_bar(ax, table, *, colors=None, label_threshold=6.0, label_size=8.5,
