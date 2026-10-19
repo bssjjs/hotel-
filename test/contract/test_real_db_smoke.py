@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : test_real_db_smoke.py
 # @Path       : analyse/test/contract/test_real_db_smoke.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:40:00
 # @Description: 真实库对账（smoke）：结构、行数与报告里的关键数字。
@@ -23,7 +23,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from hotel_dq import config, dwd
+from hotel_insight import config, dwd
 
 from schema import BOOKINGS_COLS
 

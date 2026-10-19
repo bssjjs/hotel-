@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : test_schema_contract.py
 # @Path       : analyse/test/contract/test_schema_contract.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:38:00
 # @Description: 原始表结构契约：bookings 的列名与顺序。

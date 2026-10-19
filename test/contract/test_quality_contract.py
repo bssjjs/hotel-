@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : test_quality_contract.py
 # @Path       : analyse/test/contract/test_quality_contract.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:36:00
 # @Description: dq_check_result 表结构的契约测试。
@@ -14,7 +14,7 @@
 """
 import pandas as pd
 
-from hotel_dq import quality
+from hotel_insight import quality
 
 from schema import DQ_COLS
 

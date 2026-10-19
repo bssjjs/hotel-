@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : test_quality.py
 # @Path       : analyse/test/unit/test_quality.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:15:00
 # @Description: quality 的单元测试：画像口径、百分比写法、状态校验。
@@ -12,7 +12,7 @@
 import pandas as pd
 import pytest
 
-from hotel_dq import quality
+from hotel_insight import quality
 
 
 # ── profile ──

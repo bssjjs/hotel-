@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : test_dwd.py
 # @Path       : analyse/test/unit/test_dwd.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:12:00
 # @Description: dwd 的单元测试：派生列、四步剔除数与顺序、去重保留规则。
@@ -12,7 +12,7 @@
 import pandas as pd
 import pytest
 
-from hotel_dq import config, dwd
+from hotel_insight import config, dwd
 
 from sample_data import make_raw
 

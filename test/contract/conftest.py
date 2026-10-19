@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : conftest.py
 # @Path       : analyse/test/contract/conftest.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:25:00
 # @Description: 契约测试的公共 fixture：造一个"迷你酒店库"。

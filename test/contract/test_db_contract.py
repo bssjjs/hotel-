@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : test_db_contract.py
 # @Path       : analyse/test/contract/test_db_contract.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:34:00
 # @Description: db 写入格式与分区语义的契约测试。
@@ -14,7 +14,7 @@
 """
 import pandas as pd
 
-from hotel_dq import db
+from hotel_insight import db
 
 
 def _dwd(months):

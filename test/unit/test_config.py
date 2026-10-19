@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : test_config.py
 # @Path       : analyse/test/unit/test_config.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:10:00
 # @Description: config 的单元测试：根定位、口径常量、参数加载。
@@ -11,7 +11,7 @@
 """config 的单元测试：根定位、口径常量、参数加载（纯计算 + 一次文件读取）。"""
 import pytest
 
-from hotel_dq import config
+from hotel_insight import config
 
 
 def test_find_project_root_hits_marker():

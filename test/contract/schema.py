@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : schema.py
 # @Path       : analyse/test/contract/schema.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:26:00
 # @Description: 原始表与产物表的期望结构（契约常量）。
@@ -13,7 +13,7 @@
 来源：data/hotel.db 的 PRAGMA table_info，2026-10-18。
 不是 utils.py 一类的东西——它只装"表结构契约"这一种常量（第 6.2 条）。
 """
-from hotel_dq import config, quality
+from hotel_insight import config, quality
 
 # 原始层：37 列（代理主键 + 32 业务字段 + 4 派生列）；流水线依赖这些列齐全
 BOOKINGS_COLS = ["booking_id", *config.BUSINESS_COLS, *config.DERIVED_COLS]

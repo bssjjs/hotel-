@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : test_dwd_contract.py
 # @Path       : analyse/test/contract/test_dwd_contract.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:32:00
 # @Description: dwd.clean_bookings 对下游的契约测试。
@@ -16,7 +16,7 @@ booking_id 唯一、剔除记录的键结构与自洽性。改实现可以，改
 import pandas as pd
 import pytest
 
-from hotel_dq import config, dwd
+from hotel_insight import config, dwd
 
 from sample_data import make_raw
 

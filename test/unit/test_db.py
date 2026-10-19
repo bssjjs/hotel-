@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : test_db.py
 # @Path       : analyse/test/unit/test_db.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:18:00
 # @Description: db 的单元测试：三种写入语义与表存在性判断。
@@ -11,7 +11,7 @@
 """db 的单元测试：整表替换、追加、按分区写入的语义（真实库不参与）。"""
 import pandas as pd
 
-from hotel_dq import db
+from hotel_insight import db
 
 
 def _df(months, n=None):

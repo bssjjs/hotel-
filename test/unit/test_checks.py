@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : test_checks.py
 # @Path       : analyse/test/unit/test_checks.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:20:00
 # @Description: checks 的单元测试：16 项齐全、编号唯一、阈值来自 settings。
@@ -13,7 +13,7 @@ import copy
 
 import pytest
 
-from hotel_dq import checks, config, dwd, quality
+from hotel_insight import checks, config, dwd, quality
 
 from sample_data import make_raw
 

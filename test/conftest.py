@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : conftest.py
 # @Path       : analyse/test/conftest.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:06:00
 # @Description: pytest 根配置：共享 fixture 与命令行参数。
@@ -13,7 +13,7 @@
     python -m pytest                 # 全部测试（不含真实库对账）
     python -m pytest --run-smoke     # 加跑 data/hotel.db 的对账测试
 
-hotel_dq 的导入路径由 pyproject.toml 的 [tool.pytest.ini_options] pythonpath 提供，
+hotel_insight 的导入路径由 pyproject.toml 的 [tool.pytest.ini_options] pythonpath 提供，
 这里不 hack sys.path，也不依赖 pip install -e。
 """
 import sqlite3
@@ -50,3 +50,22 @@ def con():
     c = sqlite3.connect(":memory:")
     yield c
     c.close()
+
+
+@pytest.fixture(scope="session")
+def settings():
+    """configs/settings.yaml 的内容。只读，所以整个测试会话共用一份。"""
+    from hotel_insight import config
+    return config.load_settings()
+
+
+@pytest.fixture(scope="session")
+def panel():
+    """多维合成数据（1,296 行，见 sample_data.make_panel）。
+
+    返回的是**副本**：分析函数承诺不改入参，但测试之间共享一个 DataFrame 时，
+    只要有一个函数偷偷改了列，后面的断言就会莫名其妙地错。
+    每个用到它的测试自己 .copy()，比追查"谁改的"便宜。
+    """
+    from sample_data import make_panel
+    return make_panel()

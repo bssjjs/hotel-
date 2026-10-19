@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File       : test_pipeline_contract.py
 # @Path       : analyse/test/contract/test_pipeline_contract.py
-# @Project    : hotel-dq
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 18:30:00
 # @Description: pipeline.run_day 的端到端契约测试。
@@ -17,7 +17,7 @@ import sqlite3
 
 import pandas as pd
 
-from hotel_dq import pipeline
+from hotel_insight import pipeline
 
 from schema import CLEAN_STEPS_COLS, DQ_COLS, DWD_COLS, ETL_COLS, EXPECTED_STEPS
 
