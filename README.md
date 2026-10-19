@@ -64,8 +64,13 @@ notebook、报告、图表取自同一份中间结果，改一个口径三处一
 python -m hotel_insight.pipeline --db data/hotel.db
 ```
 
-4. 打开 `notebooks/D01-口径与底座.ipynb`，内核选 **`signal`**（conda 环境 `signal` 自带，Python 3.12 + pandas 3.0），
-   从第一格往下跑。D01 钉死口径，后面五本不再重复解释。
+4. 打开 `notebooks/D01-口径与底座.ipynb`，内核选下拉里的 **`signal`**，从第一格往下跑。
+   D01 钉死口径，后面五本不再重复解释。
+
+   > 内核说明：这个 `signal` 的真实内核名是 `dl`（`display_name` 被设成了 `signal`），
+   > 指向 `conda` 环境 `signal` 的 Python 3.12 + pandas 3.0，所以 notebook 里的
+   > `kernelspec.name` 写的是 `dl`，不是选错了。首格 `%load_ext autoreload` 不能删——
+   > 少了它，下一行 `%autoreload` 会直接抛 `UsageError`，整个环境准备格不执行，后面每格都报 `NameError`。
 
 ## 五条口径（报告里必须照抄）
 
