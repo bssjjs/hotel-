@@ -5,10 +5,11 @@
 # @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-19 09:10:00
-# @Version    : v1.0.0
+# @Version    : v1.1.0
 # @Description: 比率估计与结构分解：分组取消率带置信区间、Kitagawa 三分解。
 # @ChangeLog:
 #   2026-10-19 09:10:00 | 一班第十二组 | v1.0.0 | 从 cancel 中拆出，供 origin/timing/room 共用
+#   2026-10-19 10:40:00 | 一班第十二组 | v1.1.0 | 复核时误以为 nested_kitagawa 无人调用而删, 已恢复: D06 cell 11 在用(输出为表, 不是图, 首轮扫描漏判)
 """
 只会因为"统计口径或分解方法变了"而改（AGENTS.md 第 2 条）。
 这里的函数只做三件事：比率怎么估、区间怎么给、两个时点的差异怎么拆。

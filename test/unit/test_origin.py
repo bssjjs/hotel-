@@ -41,13 +41,6 @@ def test_country_cancel_rate_of_other_is_recomputed(panel):
     assert abs(t.loc["其他", "取消率"] - tail["is_canceled"].mean()) < 1e-12
 
 
-def test_hhi_extremes():
-    one = pd.DataFrame({"g": ["a"] * 10})
-    even = pd.DataFrame({"g": ["a"] * 5 + ["b"] * 5})
-    assert abs(origin.concentration(one, "g")["HHI"] - 1) < 1e-12
-    assert abs(origin.concentration(even, "g")["HHI"] - 0.5) < 1e-12
-
-
 def test_cumulative_share_ends_at_one_and_ignores_order():
     v = [10, 30, 60]
     assert abs(origin.cumulative_share(v)[-1] - 1) < 1e-12

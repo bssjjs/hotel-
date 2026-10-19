@@ -35,15 +35,3 @@ def test_upgrade_flow_only_covers_stayed_bookings(panel):
     f = room.upgrade_flow(panel)
     assert f["单数"].sum() == (panel["is_canceled"] == 0).sum()
     assert abs(f["占比"].sum() - 1) < 1e-9
-
-
-def test_cancel_matrix_suppresses_thin_cells(panel):
-    r, n = room.cancel_matrix(panel, "market_segment", "reserved_room_type", min_cell_n=10**6)
-    assert r.isna().all().all()          # 门槛设得比任何格子都高 → 全部不显示
-    assert n.sum().sum() == len(panel)   # 但样本数照给，读者知道有多少单
-
-
-def test_cancel_matrix_shape_matches_counts(panel):
-    r, n = room.cancel_matrix(panel, "hotel_type", "reserved_room_type", min_cell_n=1)
-    assert r.shape == n.shape
-    assert n.to_numpy().sum() == len(panel)

@@ -1,6 +1,6 @@
 [project]
 name = "hotel-insight"
-version = "2.0.0"
+version = "2.1.0"
 description = "酒店预订数据的业务洞察：客源、时间、房型与取消归因，区分结构性因素与可干预因素"
 readme = "README.md"
 requires-python = ">=3.12"

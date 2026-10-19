@@ -5,10 +5,11 @@
 # @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-19 09:30:00
-# @Version    : v1.0.0
+# @Version    : v1.1.0
 # @Description: 客源结构：国别、市场细分、渠道、客群的规模与集中度。
 # @ChangeLog:
 #   2026-10-19 09:30:00 | 一班第十二组 | v1.0.0 | 初始化创建
+#   2026-10-19 10:40:00 | 一班第十二组 | v1.1.0 | 删掉无人调用的 concentration; country_table 改用 cumulative_share, 去掉与它重复的 占比.cumsum()
 """
 只会因为"客源口径变了（国家怎么归并、取前几、集中度怎么算）"而改（AGENTS.md 第 2 条）。
 不读库、不读文件、不 import viz（第 4 条 4.1）。
@@ -26,8 +27,7 @@ import pandas as pd
 
 from . import rate
 
-__all__ = ["country_table", "concentration", "cumulative_share", "mix_table",
-           "COUNTRY_COLS"]
+__all__ = ["country_table", "cumulative_share", "mix_table", "COUNTRY_COLS"]
 
 COUNTRY_COLS = ["记录数", "占比", "累计占比", "取消率", "下限", "上限",
                 "平均房价", "平均停留", "平均提前期"]
@@ -66,7 +66,8 @@ def country_table(df: pd.DataFrame, *, top_n: int = 10, min_n: int = 30,
     t["占比"] = t["记录数"] / total
 
     # 累计占比给帕累托用：从最大的国家往下加，看"几个国家覆盖了 80%"
-    t["累计占比"] = t["占比"].cumsum()
+    # 用 cumulative_share 而不是 占比.cumsum()：两者等价，但公式只该有一处定义
+    t["累计占比"] = cumulative_share(t["记录数"])
     stats = df.groupby("country", observed=True).agg(
         平均房价=("adr", "mean"), 平均停留=("total_nights", "mean"), 平均提前期=("lead_time", "mean"))
     t["平均房价"] = stats["平均房价"].reindex(t.index)
@@ -76,23 +77,6 @@ def country_table(df: pd.DataFrame, *, top_n: int = 10, min_n: int = 30,
         t.loc[other_label, ["平均房价", "平均停留", "平均提前期"]] = [
             tail["adr"].mean(), tail["total_nights"].mean(), tail["lead_time"].mean()]
     return t[COUNTRY_COLS]
-
-
-def concentration(df: pd.DataFrame, by: str) -> dict:
-    """集中度：组数、HHI、第一大与前三/前十占比。
-
-    HHI（赫芬达尔指数）= Σ 份额²，取值 0—1（这里用 0—1，不是乘 10000 的版本）。
-    为什么给 HHI 而不只给"前三占比"：前三占比相同，可能是"3 家各 20%"，
-    也可能是"1 家 50% + 2 家各 5%"，风险完全不同；HHI 对头部更敏感。
-    """
-    shares = df[by].value_counts(normalize=True)
-    return {
-        "组数": int(len(shares)),
-        "HHI": float((shares ** 2).sum()),
-        "第一大占比": float(shares.iloc[0]) if len(shares) else float("nan"),
-        "前三占比": float(shares.iloc[:3].sum()),
-        "前十占比": float(shares.iloc[:10].sum()),
-    }
 
 
 def cumulative_share(values) -> np.ndarray:

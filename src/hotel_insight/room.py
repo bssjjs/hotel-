@@ -5,10 +5,11 @@
 # @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-19 10:05:00
-# @Version    : v1.0.0
+# @Version    : v1.1.0
 # @Description: 房型结构：房型画像、房型与客源/酒店类型的交叉、换房流向。
 # @ChangeLog:
 #   2026-10-19 10:05:00 | 一班第十二组 | v1.0.0 | 初始化创建
+#   2026-10-19 10:40:00 | 一班第十二组 | v1.1.0 | 删掉无人调用的 cancel_matrix(D04 没画房型×取消率矩阵)
 """
 只会因为"房型口径变了（取前几种、交叉维度、换房怎么判）"而改（AGENTS.md 第 2 条）。
 不读库、不读文件、不 import viz（第 4 条 4.1）。
@@ -22,13 +23,11 @@
 """
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 
 from . import rate
 
-__all__ = ["room_table", "room_by", "upgrade_flow", "cancel_matrix",
-           "ROOM_COLS"]
+__all__ = ["room_table", "room_by", "upgrade_flow", "ROOM_COLS"]
 
 ROOM_COLS = ["记录数", "占比", "取消率", "下限", "上限", "平均房价", "平均停留",
              "平均提前期", "换房率"]
@@ -83,16 +82,3 @@ def upgrade_flow(df: pd.DataFrame) -> pd.DataFrame:
          .size().rename("单数").reset_index())
     g["占比"] = g["单数"] / len(stayed)
     return g.sort_values("单数", ascending=False)
-
-
-def cancel_matrix(df: pd.DataFrame, index: str, columns: str, *,
-                  min_cell_n: int = 20) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """交叉取消率矩阵，返回 (比率, 样本数)。样本少于 min_cell_n 的格子比率置 NaN。
-
-    两个矩阵一起返回是故意的：图上一格 100% 取消率、旁边标着 n=1，
-    和 n=200 的 100% 是两回事；只给比率会让人读错。
-    """
-    r = df.pivot_table(index=index, columns=columns, values="is_canceled", aggfunc="mean")
-    n = df.pivot_table(index=index, columns=columns, values="is_canceled", aggfunc="size")
-    r = r.where(n >= min_cell_n)
-    return r, n.fillna(0).astype(int)

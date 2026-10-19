@@ -58,10 +58,3 @@ def test_dow_profile_has_fixed_seven_rows(panel):
     t = timing.dow_profile(panel)
     assert list(t.index) == timing.DOW_LABELS
     assert t["记录数"].sum() == len(panel)
-
-
-def test_month_profile_shares_sum_to_one(panel):
-    t = timing.month_profile(panel)
-    assert len(t) == 12
-    assert abs(t["占比"].sum() - 1) < 1e-12
-    assert abs(t["累计占比"].iloc[-1] - 1) < 1e-12

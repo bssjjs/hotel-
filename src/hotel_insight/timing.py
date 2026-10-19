@@ -5,10 +5,11 @@
 # @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-19 09:50:00
-# @Version    : v1.0.0
-# @Description: 时间节奏：日历矩阵、月度季节指数、周内分布、提前期与停留时长分档。
+# @Version    : v1.1.0
+# @Description: 时间节奏：月度季节指数、周内分布、提前期与停留时长分档。
 # @ChangeLog:
 #   2026-10-19 09:50:00 | 一班第十二组 | v1.0.0 | 初始化创建
+#   2026-10-19 10:40:00 | 一班第十二组 | v1.1.0 | 删掉无人调用的 calendar_matrix 与 month_profile(Kaggle 口径的日历矩阵已由 notebook 内联实现)
 """
 只会因为"时间口径变了（分箱边界、同比取哪几个月、季节指数怎么算）"而改（AGENTS.md 第 2 条）。
 不读库、不读文件、不 import viz（第 4 条 4.1）。
@@ -20,38 +21,15 @@
 """
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 
 from . import rate
 
-__all__ = ["calendar_matrix", "month_profile", "dow_profile", "binned_profile",
-           "comparable_slice", "season_index", "PROFILE_COLS"]
+__all__ = ["dow_profile", "binned_profile", "comparable_slice", "season_index",
+           "PROFILE_COLS"]
 
 PROFILE_COLS = ["记录数", "占比", "取消率", "下限", "上限"]
 DOW_LABELS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
-
-
-def calendar_matrix(df: pd.DataFrame, value: str = "is_canceled",
-                    agg: str = "mean") -> pd.DataFrame:
-    """年 × 月的矩阵，行是 arrival_year，列是 1—12 月。
-
-    缺失月份留 NaN（不是 0）：颜色上做"无数据"处理，别让一张热力图把
-    "2015 年 1 月没数据"画成"那天没有取消"。
-    agg="size" 得到记录数，agg="mean" 得到取消率。
-    """
-    tab = df.pivot_table(index="arrival_year", columns="arrival_month_no",
-                         values=value, aggfunc=agg)
-    return tab.reindex(columns=range(1, 13))
-
-
-def month_profile(df: pd.DataFrame) -> pd.DataFrame:
-    """按自然月汇总：记录数、占比、累计占比、取消率。索引是"1 月"…"12 月"。"""
-    t = rate.rate_table(df, "arrival_month_no", sort="分组", ascending=True)
-    t["月名"] = [f"{int(m)} 月" for m in t.index]
-    t = t.set_index("月名")
-    t["累计占比"] = t["占比"].cumsum()
-    return t[["记录数", "占比", "累计占比", "取消率", "下限", "上限"]]
 
 
 def dow_profile(df: pd.DataFrame) -> pd.DataFrame:
