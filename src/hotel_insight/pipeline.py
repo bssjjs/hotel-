@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # @File       : pipeline.py
-# @Path       : analyse/src/hotel_dq/pipeline.py
-# @Project    : hotel-dq
+# @Path       : analyse/src/hotel_insight/pipeline.py
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 17:55:00
 # @Version    : v1.0.0
@@ -16,9 +16,9 @@
 业务参数一律从 configs/settings.yaml 读，传给计算函数（AGENTS.md 第 8 条）。
 
 用法：
-    python -m hotel_dq.pipeline --db data/hotel.db
+    python -m hotel_insight.pipeline --db data/hotel.db
 或在 notebook 里：
-    from hotel_dq import pipeline;  pipeline.run_day()
+    from hotel_insight import pipeline;  pipeline.run_day()
 """
 import argparse
 import functools

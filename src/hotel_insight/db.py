@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # @File       : db.py
-# @Path       : analyse/src/hotel_dq/db.py
-# @Project    : hotel-dq
+# @Path       : analyse/src/hotel_insight/db.py
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 17:05:00
 # @Version    : v1.0.0

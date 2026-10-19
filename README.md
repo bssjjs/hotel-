@@ -1,4 +1,4 @@
-# hotel-dq：酒店预订数据质量评估
+# hotel-insight：酒店预订数据质量评估
 
 用 `data/hotel.db` 里的 119,390 条预订记录（2015-07-01 至 2017-08-31），回答一个问题：
 **这份数据能不能直接拿去做取消预测与收益分析？**
@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | `data/` | `hotel.db`（原始层 + 三个分析视图） | **不进** |
 | `configs/settings.yaml` | 业务参数的唯一来源（清洗阈值、判定阈值） | 进 |
-| `src/hotel_dq/` | 代码包：notebook、命令行、测试都从这里 import | 进 |
+| `src/hotel_insight/` | 代码包：notebook、命令行、测试都从这里 import | 进 |
 | `notebooks/` | 每天的分析（`D01-…` 两位编号） | 进（运行结果自动清空） |
 | `docs/` | 需求规格、图表规范、数据字典、发现清单、测试说明 | 进 |
 | `image/` | notebook 出图（随时可以重新生成） | **不进** |
@@ -25,7 +25,7 @@
 3. 命令行跑一遍流水线：
 
 ```bash
-python -m hotel_dq.pipeline --db data/hotel.db
+python -m hotel_insight.pipeline --db data/hotel.db
 ```
 
 4. 打开 `notebooks/D01-数据接入与字段画像.ipynb`，用 `signal` 环境的内核，从第一格开始运行。

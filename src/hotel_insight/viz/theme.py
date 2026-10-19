@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # @File       : theme.py
-# @Path       : analyse/src/hotel_dq/viz/theme.py
-# @Project    : hotel-dq
+# @Path       : analyse/src/hotel_insight/viz/theme.py
+# @Project    : hotel-insight
 # @Author     : 一班第十二组
 # @Date       : 2026-10-18 17:40:00
 # @Version    : v1.0.0

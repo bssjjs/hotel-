@@ -1,4 +1,4 @@
-# hotel-dq 团队工程规范
+# hotel-insight 团队工程规范
 
 > 本文件给人看，也给编程智能体看。往仓库里加任何文件之前，先读完本文件。
 > 每条规则都写了“理由”：只有规则、没有理由的不算写完。【D0x】是这条规则加入的批次。
@@ -25,13 +25,13 @@
 
 | 会因为什么而改 | 放哪 |
 | --- | --- |
-| 路径、口径常量、阈值变了 | `src/hotel_dq/config.py`、`configs/settings.yaml` |
-| 换数据库、换写入方式 | `src/hotel_dq/db.py` |
-| 清洗规则变了（四步的顺序或判据） | `src/hotel_dq/dwd.py` |
-| 16 项检查的定义变了 | `src/hotel_dq/checks.py` |
-| 稽核记录、字段画像的格式变了 | `src/hotel_dq/quality.py` |
-| 流水线的步骤编排变了 | `src/hotel_dq/pipeline.py` |
-| 图表规范变了 | `src/hotel_dq/viz/` |
+| 路径、口径常量、阈值变了 | `src/hotel_insight/config.py`、`configs/settings.yaml` |
+| 换数据库、换写入方式 | `src/hotel_insight/db.py` |
+| 清洗规则变了（四步的顺序或判据） | `src/hotel_insight/dwd.py` |
+| 16 项检查的定义变了 | `src/hotel_insight/checks.py` |
+| 稽核记录、字段画像的格式变了 | `src/hotel_insight/quality.py` |
+| 流水线的步骤编排变了 | `src/hotel_insight/pipeline.py` |
+| 图表规范变了 | `src/hotel_insight/viz/` |
 | 只用一次的探索 | 留在 notebook 里，不收 |
 
 **理由**：改一种东西只动一个地方，别人知道去哪找；不同原因的代码混在一起，改 A 容易碰坏 B。
@@ -83,7 +83,7 @@ config
 
 6.1 变量、函数、模块用英文，小写加下划线。中文放在注释、文档、图上的文字、表里的值。
 6.2 模块名是名词，说清它管什么。**不准建 `utils.py`、`common.py`、`helper.py`、`misc.py`**。
-6.3 包名 `hotel_dq`（import 用），发行名 `hotel-dq`（pip 用）。
+6.3 包名 `hotel_insight`（import 用），发行名 `hotel-insight`（pip 用）。
 6.4 notebook 用两位编号：`D01-数据接入与字段画像.ipynb`。不补零会排成 D1、D10、D2。
 
 **理由**：名字是给人看的索引；杂物抽屉式的文件名，半年后没人敢删。
