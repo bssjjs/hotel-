@@ -64,8 +64,8 @@ notebook、报告、图表取自同一份中间结果，改一个口径三处一
 python -m hotel_insight.pipeline --db data/hotel.db
 ```
 
-4. 打开 `notebooks/D01-口径与底座.ipynb`，用 `signal` 环境的内核，从第一格往下跑。
-   D01 钉死口径，后面五本不再重复解释。
+4. 打开 `notebooks/D01-口径与底座.ipynb`，内核选 **`signal`**（conda 环境 `signal` 自带，Python 3.12 + pandas 3.0），
+   从第一格往下跑。D01 钉死口径，后面五本不再重复解释。
 
 ## 五条口径（报告里必须照抄）
 
