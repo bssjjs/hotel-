@@ -282,15 +282,22 @@ def quadrant(ax, xs, ys, labels, *, x_name="影响面", y_name="可干预程度"
     ax.scatter(x, y, s=size, color=colors if colors is not None else MAIN,
                alpha=0.85, zorder=3, edgecolor="white", linewidth=1.2)
 
-    # 同一横档上的标签交替上下，避免"酒店类型"和"到达月份"叠在一起
+    # 同一横档上的标签交错排：最低档只能朝上（朝下会压住 x 轴刻度），
+    # 最高档只能朝下（朝上会顶出画布），中间档正常上下交替
     layers: dict[float, list[int]] = {}
     for i, yi in enumerate(y):
         layers.setdefault(float(yi), []).append(i)
+    ymin, ymax = float(np.min(y)), float(np.max(y))
     offsets = {}
-    for idxs in layers.values():
+    for yv, idxs in layers.items():
         idxs.sort(key=lambda i: x[i])
         for k, i in enumerate(idxs):
-            offsets[i] = (0, 13) if k % 2 == 0 else (0, -21)
+            if yv == ymin:
+                offsets[i] = (0, 14) if k % 2 == 0 else (0, 32)
+            elif yv == ymax:
+                offsets[i] = (0, -22) if k % 2 == 0 else (0, -40)
+            else:
+                offsets[i] = (0, 13) if k % 2 == 0 else (0, -21)
     for i, (xi, yi, li) in enumerate(zip(x, y, labels)):
         ax.annotate(li, (xi, yi), textcoords="offset points", xytext=offsets[i],
                     ha="center", fontsize=label_size, color=INK)
