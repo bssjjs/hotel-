@@ -33,7 +33,7 @@ reporting:
 # 都从这里读（AGENTS.md 第 8 条）；notebook 里不写 365、10、30 这类数字。
 analysis:
   top_country_n: 10          # 客源国图与热力矩阵取前几
-  top_room_n: 6              # 房型图取前几（A—H 九种里后几种样本很少）
+  top_room_n: 8              # 房型图取前几（A—H 八种有量；L 只有 6 条，一律不画）
   min_group_n: 30            # 分组样本下限：低于它只画点不画结论，避免 3 单算出 67%
   min_cell_n: 20             # 热力矩阵单元格下限：低于它的格子打灰，不给取消率
   focus_market: 在线旅行社    # 取消分析的主战场：占 60%，取消率也最高
