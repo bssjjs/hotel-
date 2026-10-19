@@ -255,7 +255,11 @@ def dumbbell(ax, labels, left, right, *, left_name="A", right_name="B",
     ax.set_yticks(y, labels)
     ax.invert_yaxis()
     ax.grid(axis="y", visible=False)
-    ax.legend(frameon=False, fontsize=9, loc="lower right")
+    # 右侧留白：数值标签写在最右点之后，不留白会被画布裁掉（D03 第一稿就踩了）
+    span = max(r.max(), l.max()) - min(r.min(), l.min())
+    ax.set_xlim(min(l.min(), r.min()) - span * 0.08, max(l.max(), r.max()) + span * 0.55)
+    # 图例放右上角：数据点都压在左侧，右上是唯一不会压住东西的位置
+    ax.legend(frameon=False, fontsize=9, loc="upper right")
 
 
 def quadrant(ax, xs, ys, labels, *, x_name="影响面", y_name="可干预程度",
