@@ -19,7 +19,7 @@
 from __future__ import annotations
 
 import numpy as np
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, to_rgb
 from matplotlib.patches import Rectangle
 
 from .theme import BLUES, FAINT, GRAY, GRAY_DARK, INK, MAIN, MAIN_DARK, MAIN_LIGHT, MAIN_MID, RED
@@ -41,6 +41,16 @@ def fmt_pct(v: float, digits: int = 0) -> str:
 def fmt_k(v: float) -> str:
     """13893 → "13.9k"，用于坐标轴刻度，避免五位数挤在一起。"""
     return f"{v / 1000:.1f}k" if abs(v) >= 1000 else f"{v:,.0f}"
+
+
+def _ink_on(color) -> str:
+    """按背景亮度选字色：深底白字、浅底深字。
+
+    不能用"第几段"来判（i <= 1 就白字）——配色一换，第 2 段可能已经是浅蓝，
+    白字直接糊在底色上。亮度阈值 0.55 对蓝、灰、琥珀都够用。
+    """
+    r, g, b = to_rgb(color)
+    return "white" if 0.299 * r + 0.587 * g + 0.114 * b < 0.55 else INK
 
 
 def hbar(ax, labels, values, *, errors=None, colors=None, value_fmt="{:,.0f}",
@@ -92,13 +102,13 @@ def share_bar(ax, table, *, colors=None, label_threshold=6.0, label_size=8.5,
                 label=str(col), zorder=2)
         for yi, wi, li in zip(y, w, left):
             if wi >= label_threshold:
-                # BLUES 从深到浅：前两段底色深，字用白色才看得清
                 ax.text(li + wi / 2, yi, f"{wi:.0f}", ha="center", va="center",
-                        fontsize=label_size, color="white" if i <= 1 else INK)
+                        fontsize=label_size, color=_ink_on(cols[i % len(cols)]))
         left += w
     ax.set_yticks(y, table.index)
     ax.invert_yaxis()
     ax.set_xlim(0, 100)
+    ax.xaxis.set_major_formatter(lambda v, _: f"{v:.0f}%")   # 轴是百分比，刻度上就写明白
     ax.grid(False)
     if legend:
         ax.legend(ncol=min(len(table.columns), 5), loc="upper center",
