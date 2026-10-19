@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>酒店需求洞察 · 客源、节奏与取消</title>
+<meta name="description" content="用 119,390 条真实酒店预订记录，回答客人从哪来、什么时候来、房型由什么决定、取消和什么有关，并判断哪些是结构性的、哪些能干预。">
+<style>
+:root{
+  --ink:#0c1a28; --ink2:#2c4256; --muted:#6c8199; --faint:#93a5b8;
+  --line:#e3eaf2; --line-2:#eff4f9;
+  --bg:#fbfcfe; --panel:#ffffff;
+  --brand:#1d6fa5; --brand-2:#2e86c1; --brand-3:#5ba3ce; --brand-4:#9cc7e0;
+  --brand-5:#cfe4f1; --brand-6:#e8f2f9; --brand-deep:#14486b; --brand-ink:#0d3550;
+  --warn:#b45309; --danger:#b3382c; --ok:#2f7d5f;
+  --maxw:1120px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink); line-height:1.68;
+  font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",sans-serif;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+h1,h2,h3,h4{margin:0; font-weight:600; letter-spacing:-.02em; line-height:1.28}
+p{margin:0}
+a{color:inherit; text-decoration:none}
+.mono{font-family:ui-monospace,"SF Mono","Cascadia Mono",Consolas,"Roboto Mono",monospace}
+.num{font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 32px}
+
+/* ---------- 顶部进度与导航 ---------- */
+#progress{position:fixed; top:0; left:0; height:2px; width:0; background:var(--brand); z-index:120; transition:width .1s linear}
+.nav{
+  position:sticky; top:0; z-index:100; height:64px;
+  background:rgba(251,252,254,.82); backdrop-filter:saturate(180%) blur(14px);
+  -webkit-backdrop-filter:saturate(180%) blur(14px);
+  border-bottom:1px solid transparent; transition:border-color .3s var(--ease), background .3s var(--ease);
+}
+.nav.solid{border-bottom-color:var(--line)}
+.nav-inner{max-width:var(--maxw); margin:0 auto; padding:0 32px; height:100%; display:flex; align-items:center; justify-content:space-between}
+.brand{display:flex; align-items:center; gap:10px; font-size:15px; letter-spacing:-.01em}
+.brand-mark{width:18px; height:18px; border-radius:5px; background:linear-gradient(140deg,var(--brand-2),var(--brand-deep)); position:relative; flex:0 0 auto}
+.brand-mark::after{content:""; position:absolute; inset:5px 5px auto auto; width:7px; height:7px; border-radius:2px; background:#fff; opacity:.9}
+.brand-text{font-weight:600}
+.brand-text em{font-style:normal; color:var(--brand)}
+.nav-links{display:flex; gap:26px; font-size:13.5px; color:var(--ink2)}
+.nav-links a{position:relative; padding:4px 0; transition:color .2s}
+.nav-links a::after{content:""; position:absolute; left:0; right:100%; bottom:0; height:1.5px; background:var(--brand); transition:right .28s var(--ease)}
+.nav-links a:hover{color:var(--brand)}
+.nav-links a:hover::after,.nav-links a.active::after{right:0}
+.nav-links a.active{color:var(--brand)}
+
+/* ---------- Hero ---------- */
+.hero{
+  position:relative; overflow:hidden; padding:104px 0 92px;
+  background:
+    radial-gradient(900px 460px at 82% -6%, rgba(46,134,193,.10), transparent 62%),
+    radial-gradient(700px 380px at 4% 104%, rgba(29,111,165,.06), transparent 60%),
+    var(--bg);
+}
+.hero::after{
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
+  background-image:linear-gradient(rgba(29,111,165,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(29,111,165,.045) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(680px 420px at 76% 12%, #000 10%, transparent 78%);
+  -webkit-mask-image:radial-gradient(680px 420px at 76% 12%, #000 10%, transparent 78%);
+}
+.hero .wrap{position:relative; z-index:1}
+.eyebrow{
+  font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--brand);
+  display:flex; align-items:center; gap:10px; margin-bottom:26px; font-weight:500;
+}
+.eyebrow .dot{width:4px; height:4px; border-radius:50%; background:var(--brand-4)}
+.hero-title{font-size:clamp(40px,5.6vw,72px); line-height:1.1; letter-spacing:-.035em; font-weight:700}
+.hero-title .accent{color:var(--brand)}
+.hero-sub{max-width:600px; margin-top:28px; font-size:17px; line-height:1.75; color:var(--ink2)}
+.hero-sub b{font-weight:600; color:var(--ink)}
+.kpis{display:flex; flex-wrap:wrap; gap:0; margin-top:56px; border-top:1px solid var(--line)}
+.kpi{flex:1 1 170px; padding:24px 30px 0 0; margin-right:30px; border-right:1px solid var(--line)}
+.kpi:last-child{border-right:0; margin-right:0}
+.kpi-num{display:block; font-size:34px; font-weight:600; letter-spacing:-.035em; color:var(--brand-ink); font-variant-numeric:tabular-nums; line-height:1.1}
+.kpi-num small{font-size:17px; font-weight:500; color:var(--brand); margin-left:2px}
+.kpi-label{display:block; margin-top:7px; font-size:12.5px; color:var(--muted); letter-spacing:.02em}
+
+/* ---------- 三句话 ---------- */
+.findings{padding:0 0 104px}
+.findings-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:14px; overflow:hidden}
+.finding{background:var(--panel); padding:30px 28px 32px; transition:background .35s var(--ease)}
+.finding:hover{background:#fcfdff}
+.f-num{font-size:11.5px; letter-spacing:.14em; color:var(--brand-3); font-weight:500}
+.finding h3{font-size:16.5px; margin:14px 0 10px; line-height:1.5}
+.finding p{font-size:13.5px; color:var(--muted); line-height:1.72}
+.finding p b{color:var(--ink2); font-weight:600}
+
+/* ---------- 章节骨架 ---------- */
+.sec{padding:104px 0; border-top:1px solid var(--line)}
+.sec:nth-of-type(even){background:linear-gradient(180deg,#fff,#fbfdff 60%,#fbfcfe)}
+.sec-head{display:grid; grid-template-columns:64px 1fr; gap:0 22px; align-items:baseline; margin-bottom:48px}
+.sec-num{font-size:12px; letter-spacing:.14em; color:var(--brand-3); padding-top:8px}
+.sec-head h2{font-size:clamp(26px,3.1vw,36px); letter-spacing:-.03em}
+.sec-lead{grid-column:2; margin-top:14px; max-width:720px; font-size:15.5px; line-height:1.8; color:var(--ink2)}
+.sec-lead b{font-weight:600; color:var(--ink); border-bottom:1px solid var(--brand-5); padding-bottom:1px}
+
+/* ---------- 图表卡 ---------- */
+.chart-card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:30px 30px 24px; margin:0}
+.chart{width:100%; overflow-x:auto; overflow-y:hidden}
+.chart svg{display:block; width:100%; height:auto; min-width:560px; font-family:inherit}
+.chart::-webkit-scrollbar{height:6px}
+.chart::-webkit-scrollbar-thumb{background:var(--brand-5); border-radius:3px}
+figcaption{margin-top:18px; padding-top:16px; border-top:1px dashed var(--line); font-size:12.5px; color:var(--muted); line-height:1.7}
+figcaption b{color:var(--ink2); font-weight:600}
+.cap-key{display:flex; flex-wrap:wrap; gap:16px; margin-top:8px}
+.cap-key span{display:inline-flex; align-items:center; gap:6px}
+.cap-key i{width:10px; height:10px; border-radius:3px; display:inline-block}
+
+/* ---------- 两列 / 三列 ---------- */
+.duo{display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start}
+.trio{display:grid; grid-template-columns:repeat(3,1fr); gap:22px}
+.trio.two{grid-template-columns:1fr 1fr}
+.trio.mini{grid-template-columns:repeat(3,1fr); gap:14px}
+.stack{display:grid; gap:22px}
+/* 网格子项默认 min-width:auto，会被图表的最小宽度撑破，这里统一改掉 */
+.duo > *,.trio > *,.stack > *,.caveat-grid > *,.findings-grid > *{min-width:0}
+.chart-card{min-width:0}
+
+/* ---------- 数字卡 ---------- */
+.stat{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:24px 24px 22px}
+.stat-k{font-size:12px; color:var(--muted); letter-spacing:.02em}
+.stat-v{display:block; margin-top:10px; font-size:30px; font-weight:600; letter-spacing:-.03em; color:var(--brand-ink); font-variant-numeric:tabular-nums; line-height:1.15}
+.stat-v small{font-size:14px; font-weight:500; color:var(--brand); margin-left:3px}
+.stat-d{margin-top:9px; font-size:12.5px; color:var(--faint); line-height:1.65}
+
+/* ---------- 表格 ---------- */
+.tbl{width:100%; border-collapse:collapse; font-size:13.5px; margin-top:6px}
+.tbl caption{text-align:left; font-size:12px; color:var(--faint); padding-bottom:10px; letter-spacing:.03em}
+.tbl th{text-align:left; font-weight:500; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); padding:0 12px 10px 0; border-bottom:1px solid var(--line)}
+.tbl td{padding:11px 12px 11px 0; border-bottom:1px solid var(--line-2); color:var(--ink2)}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.n,.tbl th.n{text-align:right; font-variant-numeric:tabular-nums; padding-right:0}
+.tbl .strong{color:var(--ink); font-weight:600}
+.tbl .dim{color:var(--faint)}
+.tag{display:inline-block; padding:2px 8px; border-radius:5px; font-size:11.5px; line-height:1.6; white-space:nowrap}
+.tag.s{background:#eef3f8; color:#5a7086}
+.tag.m{background:#e7f0f8; color:#2e6f96}
+.tag.i{background:#e4f2ea; color:#2f7d5f}
+.tag.q{background:#fdf0e2; color:#b45309}
+
+/* ---------- 结论条 ---------- */
+.insight{display:grid; grid-template-columns:3px 1fr; gap:0 20px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px 24px 20px 20px}
+.insight::before{content:""; background:var(--brand); border-radius:2px}
+.insight h4{font-size:14px; letter-spacing:0}
+.insight p{margin-top:6px; font-size:13.5px; color:var(--muted); line-height:1.75}
+.insight p b{color:var(--ink2); font-weight:600}
+
+/* ---------- 口径与边界 ---------- */
+.caveat-grid{display:grid; grid-template-columns:1fr 1fr; gap:22px}
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:28px 28px 26px}
+.panel h3{font-size:15px; margin-bottom:6px}
+.panel > p.sub{font-size:12.5px; color:var(--faint); margin-bottom:18px; line-height:1.7}
+.rule{display:grid; grid-template-columns:22px 1fr; gap:0 12px; padding:15px 0; border-bottom:1px solid var(--line-2); font-size:13.5px; color:var(--ink2); line-height:1.7}
+.rule:last-child{border-bottom:0}
+.rule .i{font-size:11px; color:var(--brand-3); padding-top:3px; font-variant-numeric:tabular-nums}
+.rule b{font-weight:600; color:var(--ink)}
+.rule span.d{color:var(--muted)}
+
+/* ---------- 页脚 ---------- */
+footer{background:var(--brand-ink); color:#cfe0ee; padding:64px 0 48px; margin-top:0}
+footer .wrap{display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:40px}
+footer h4{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#8fb6d1; font-weight:500; margin-bottom:16px}
+footer p{font-size:13px; line-height:1.8; color:#a9c4d8}
+footer .f-brand{display:flex; align-items:center; gap:9px; color:#fff; font-size:15px; font-weight:600; margin-bottom:14px}
+footer .f-brand .brand-mark{background:linear-gradient(140deg,#5ba3ce,#2e86c1)}
+footer ul{list-style:none; margin:0; padding:0}
+footer li{font-size:13px; color:#a9c4d8; padding:5px 0}
+footer code{font-family:ui-monospace,"SF Mono",Consolas,monospace; font-size:12px; background:rgba(255,255,255,.08); padding:2px 7px; border-radius:5px; color:#d8e8f4}
+.f-bottom{max-width:var(--maxw); margin:44px auto 0; padding:20px 32px 0; border-top:1px solid rgba(255,255,255,.1); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; font-size:12px; color:#7a9bb4}
+
+/* ---------- 动效 ---------- */
+.reveal{opacity:0; transform:translateY(18px); transition:opacity .75s var(--ease), transform .75s var(--ease)}
+.reveal.in{opacity:1; transform:none}
+.reveal.d1{transition-delay:.08s}
+.reveal.d2{transition-delay:.16s}
+.reveal.d3{transition-delay:.24s}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1; transform:none; transition:none}
+  html{scroll-behavior:auto}
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:960px){
+  .findings-grid{grid-template-columns:1fr}
+  .duo,.trio,.caveat-grid{grid-template-columns:1fr}
+  .sec-head{grid-template-columns:44px 1fr; gap:0 14px}
+  footer .wrap{grid-template-columns:1fr; gap:32px}
+}
+@media (max-width:720px){
+  .trio.mini{grid-template-columns:1fr 1fr}
+  .wrap{padding:0 20px}
+  .nav-links{display:none}
+  .hero{padding:72px 0 64px}
+  .kpis{gap:18px 0}
+  .kpi{flex:1 1 45%; border-right:0; margin-right:0; padding:18px 0 0}
+  .kpi-num{font-size:27px}
+  .sec{padding:72px 0}
+  .chart-card{padding:20px 16px 18px}
+  .panel{padding:22px 20px}
+  .findings{padding-bottom:72px}
+  .f-bottom{flex-direction:column; gap:8px}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">
+      <span class="brand-mark"></span>
+      <span class="brand-text">Hotel<em>Insight</em></span>
+    </a>
+    <div class="nav-links" id="navlinks">
+      <a href="#base">底座</a>
+      <a href="#origin">客源</a>
+      <a href="#timing">时间</a>
+      <a href="#room">房型</a>
+      <a href="#cancel">取消</a>
+      <a href="#structure">归因</a>
+      <a href="#caveat">口径</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="hero" id="top">
+  <div class="wrap">
+    <p class="eyebrow">Hotel Demand Insight <span class="dot"></span> 2026</p>
+    <h1 class="hero-title">谁在预订，<br>何时到来，<br><span class="accent">为何取消</span></h1>
+    <p class="hero-sub">
+      以 <b>119,390</b> 条真实酒店预订记录为底，回答四个经营问题，
+      并往前多走一步——判断其中<b>哪些是结构性的，哪些真的能干预</b>。
+    </p>
+    <div class="kpis">
+      <div class="kpi">
+        <span class="kpi-num num" data-count="85585">0</span>
+        <span class="kpi-label">有效预订（清洗后）</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi-num num" data-count="26">0</span>
+        <span class="kpi-label">覆盖月份</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi-num num" data-count="176">0</span>
+        <span class="kpi-label">客源国家 / 地区</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi-num num"><span data-count="27.85" data-dec="2">0</span><small>%</small></span>
+        <span class="kpi-label">整体取消率</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= 三句话 ================= -->
+<section class="findings">
+  <div class="wrap">
+    <div class="findings-grid">
+      <article class="finding reveal">
+        <span class="f-num mono">FINDING 01</span>
+        <h3>没有「影响大且可改」的杠杆</h3>
+        <p>12 个候选因素按<b>影响面</b>与<b>可干预性</b>铺开，右上角是空的。影响最大的三项里两项是结构性的。</p>
+      </article>
+      <article class="finding reveal d1">
+        <span class="f-num mono">FINDING 02</span>
+        <h3>不是客人变差了，是同一批客人订得更早</h3>
+        <p>同月取消率一年涨了 <b>6.36 个百分点</b>，而客源结构效应是 <b>−1.14pp</b>——客人构成反而变好了。</p>
+      </article>
+      <article class="finding reveal d2">
+        <span class="f-num mono">FINDING 03</span>
+        <h3>押金类型是结果，不是原因</h3>
+        <p>「不可退款」组取消率 <b>94.7%</b>，与直觉相反。它是取消<b>之后</b>的处置结果，不能当预测特征。</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 01 底座 ================= -->
+<section class="sec" id="base">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num mono">01</span>
+      <h2>底座：先决定哪些数据能算</h2>
+      <p class="sec-lead">
+        原始记录里 <b>26.6% 是完全重复行</b>——同一份订单被重复导入。
+        四步清洗按固定顺序执行，剩 <b>85,585 行</b>作为全部分析的分母；顺序一换，剔除数就对不上。
+      </p>
+    </div>
+
+    <figure class="chart-card reveal">
+      <div class="chart" id="c-funnel"></div>
+      <figcaption>
+        <b>每一步只剔除一类问题，且不可交换。</b>先剔「无人入住」再看晚数，否则零晚数行会被误判；
+        去重必须在最后，否则同一单的「异常版本」会先被删掉一个，重复数与实际不符。
+        <div class="cap-key">
+          <span><i style="background:var(--brand)"></i>保留 71.7%</span>
+          <span><i style="background:var(--brand-4)"></i>完全重复 26.6%</span>
+          <span><i style="background:var(--brand-5)"></i>其他异常 1.7%</span>
+        </div>
+      </figcaption>
+    </figure>
+
+    <div class="duo" style="margin-top:22px">
+      <div class="panel reveal">
+        <h3>四步清洗明细</h3>
+        <p class="sub">按执行顺序排列，剔除行数为实测值</p>
+        <table class="tbl">
+          <thead>
+            <tr><th>步骤</th><th class="n">剔除</th><th class="n">剩余</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>原始记录</td><td class="n dim">—</td><td class="n strong num">119,390</td></tr>
+            <tr><td>① 无人入住（成人数为 0）</td><td class="n num">180</td><td class="n num">119,210</td></tr>
+            <tr><td>② 零晚数（住 0 晚）</td><td class="n num">645</td><td class="n num">118,565</td></tr>
+            <tr><td>③ 房价异常（adr ≤ 0）</td><td class="n num">1,167</td><td class="n num">117,398</td></tr>
+            <tr><td>④ 完全重复（整行一致）</td><td class="n num">31,813</td><td class="n strong num">85,585</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="stack reveal d1">
+        <div class="insight">
+          <div>
+            <h4>去重这一步，决定了后面所有结论</h4>
+            <p>原始表取消率 <b>37.04%</b>，清洗后 <b>27.85%</b>。重复行把取消率抬高了 <b>9.2 个百分点</b>——
+              不做这一步，后面每个数字都会系统性偏高。</p>
+          </div>
+        </div>
+        <div class="trio two">
+          <div class="stat">
+            <span class="stat-k">时间跨度</span>
+            <span class="stat-v num">26<small>个月</small></span>
+            <p class="stat-d">2015-07 至 2017-08<br>仅 2016 为完整年</p>
+          </div>
+          <div class="stat">
+            <span class="stat-k">酒店数</span>
+            <span class="stat-v num">2<small>家</small></span>
+            <p class="stat-d">城市酒店 52,320<br>度假酒店 33,265</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 02 客源 ================= -->
+<section class="sec" id="origin">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num mono">02</span>
+      <h2>客人从哪来</h2>
+      <p class="sec-lead">
+        176 个客源国家 / 地区，前 10 个占了 <b>81.5%</b>。长尾很长，但决策只需要看前 10 个——
+        剩下的 166 个加起来不到两成。
+      </p>
+    </div>
+
+    <figure class="chart-card reveal">
+      <div class="chart" id="c-origin"></div>
+      <figcaption>
+        横条长度为订单占比，<b>颜色越深代表取消率越高</b>，右侧数字为该客源国的取消率。葡萄牙一国的取消率（37.0%）明显高于全盘 27.85%，
+        且体量最大，对总取消率的拉动最强。
+      </figcaption>
+    </figure>
+
+    <div class="trio" style="margin-top:22px">
+      <div class="stat reveal">
+        <span class="stat-k">前 3 国合计</span>
+        <span class="stat-v num">52.8<small>%</small></span>
+        <p class="stat-d">葡萄牙 · 英国 · 法国</p>
+      </div>
+      <div class="stat reveal d1">
+        <span class="stat-k">单一最大来源</span>
+        <span class="stat-v num">30.4<small>%</small></span>
+        <p class="stat-d">葡萄牙 26,025 单，取消率 37.0%</p>
+      </div>
+      <div class="stat reveal d2">
+        <span class="stat-k">渠道集中度</span>
+        <span class="stat-v num">59.9<small>%</small></span>
+        <p class="stat-d">在线旅行社，取消率 35.6%<br>是整体的 1.3 倍</p>
+      </div>
+    </div>
+
+    <div class="duo" style="margin-top:22px">
+      <div class="insight reveal">
+        <div>
+          <h4>高取消率的国家，渠道与提前期并不一致</h4>
+          <p>巴西（36.7%）、意大利（35.2%）、葡萄牙（37.0%）三国取消率都在 35% 以上，合计占 <b>36.3%</b> 的订单。
+            但葡萄牙的 OTA 占比只有 <b>41.7%</b>、平均提前期 <b>66.7 天</b>，都低于全盘（59.9% / 80.7 天）——
+            说明「国籍」本身不是解释力强的变量，它只是渠道与预订窗口的代理指标。</p>
+        </div>
+      </div>
+      <div class="insight reveal d1">
+        <div>
+          <h4>渠道与国籍的解释力相当，但渠道更能落到动作</h4>
+          <p>按渠道分组，取消率极差 <b>27.5pp</b>（在线旅行社 35.6% vs 企业协议 12.2%）；
+            按客源国分组，前 20 国的极差是 <b>22.2pp</b>。两者量级相近，但渠道只有 7 组，
+            用 7 组解释同样的差异，显然更好用。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 03 时间 ================= -->
+<section class="sec" id="timing">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num mono">03</span>
+      <h2>什么时候来</h2>
+      <p class="sec-lead">
+        季节决定忙闲，提前期决定风险。前者是日历，后者是行为——
+        而行为这一侧，出现了全表最强的一条单调关系。
+      </p>
+    </div>
+
+    <div class="duo">
+      <figure class="chart-card reveal">
+        <div class="chart" id="c-season"></div>
+        <figcaption>以 2016 年（唯一完整年）的月均订单为 1.0 计算季节指数。8 月最旺（1.27），1 月最淡（0.52），相差 <b>2.4 倍</b>。</figcaption>
+      </figure>
+      <figure class="chart-card reveal d1">
+        <div class="chart" id="c-dow"></div>
+        <figcaption>按到达日统计的取消率。周五、周六到达的订单取消率最高（31.0% / 30.4%），周二最低（24.7%），幅度约 <b>6.3 个百分点</b>。</figcaption>
+      </figure>
+    </div>
+
+    <figure class="chart-card reveal" style="margin-top:22px">
+      <div class="chart" id="c-lead"></div>
+      <figcaption>
+        <b>提前期与取消率严格单调：6 个档位，没有一次回落。</b>
+        从「7 天内」的 8.4% 一路升到「365 天以上」的 41.9%，相差 5 倍。
+        这是所有字段里最强的单一信号，也是唯一能直接转化为动作的一条。
+      </figcaption>
+    </figure>
+
+    <div class="trio" style="margin-top:22px">
+      <div class="stat reveal">
+        <span class="stat-k">近单取消率</span>
+        <span class="stat-v num">8.4<small>%</small></span>
+        <p class="stat-d">提前期 ≤ 7 天，17,271 单</p>
+      </div>
+      <div class="stat reveal d1">
+        <span class="stat-k">远期单取消率</span>
+        <span class="stat-v num">41.9<small>%</small></span>
+        <p class="stat-d">提前期 &gt; 365 天，547 单</p>
+      </div>
+      <div class="stat reveal d2">
+        <span class="stat-k">取消发生在到达前</span>
+        <span class="stat-v num">46.2<small>%</small></span>
+        <p class="stat-d">30 天以内取消的占比</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 04 房型 ================= -->
+<section class="sec" id="room">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num mono">04</span>
+      <h2>房型由什么决定</h2>
+      <p class="sec-lead">
+        看起来是客人的选择，实际上更多是门店的供给结构。
+        A 型一种就占了 <b>64.6%</b>，而价格跨度从 94 到 191，差的不是客人，是房间。
+      </p>
+    </div>
+
+    <figure class="chart-card reveal">
+      <div class="chart" id="c-room"></div>
+      <figcaption>
+        横条为订单占比，右侧标注该房型的<b>平均房价</b>与<b>取消率</b>。
+        最贵的 H 型（191）取消率也最高（41.2%），最便宜的 A 型（94）取消率最低（26.3%）——
+        价格与取消率正相关，但相关的是房型背后的客群与提前期，而非价格本身。
+      </figcaption>
+    </figure>
+
+    <div class="duo" style="margin-top:22px">
+      <div class="insight reveal">
+        <div>
+          <h4>房型是门店属性，不是客群偏好</h4>
+          <p>取订单量 ≥ 30 的 <b>62 个客源国</b>，每个国家的 A 型占比全部落在 <b>50%–84%</b> 区间。
+            如果房型真是文化偏好，应该出现明显分化；实际是同一区间内的随机波动，跟着门店走。</p>
+        </div>
+      </div>
+      <div class="insight reveal d1">
+        <div>
+          <h4>近四分之一的客人，最终没住进自己订的房型</h4>
+          <p>在未取消订单中，A 型的换房率达到 <b>23.5%</b>。这个数字只在「真的住了」的订单上计算——
+            已取消订单没有分配房型，算进去会得到 0，那是幸存者偏差。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 05 取消 ================= -->
+<section class="sec" id="cancel">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num mono">05</span>
+      <h2>取消和什么有关</h2>
+      <p class="sec-lead">
+        把 12 个候选因素按 <b>超额取消单</b>铺开（该组取消率高出全盘的部分 × 组内单量），
+        再叠上「能不能改」，得到一个可以直接拿去做决策的坐标系。
+      </p>
+    </div>
+
+    <figure class="chart-card reveal">
+      <div class="chart" id="c-quadrant"></div>
+      <figcaption>
+        <b>右上角是空的。</b>横轴越靠右代表影响越大，纵轴越靠上代表越可干预。
+        影响最大的市场细分、客源国都是结构性的；能改的特殊要求、停车位，影响只到中游。
+        没有一个因素同时占据两个条件——这意味着不存在单点杠杆，改善只能靠组合动作。
+      </figcaption>
+    </figure>
+
+    <div class="duo" style="margin-top:22px">
+      <div class="panel reveal">
+        <h3>12 个因素的完整排序</h3>
+        <p class="sub">超额取消单 = Σ 组内单量 × max(0, 该组取消率 − 全盘取消率)</p>
+        <table class="tbl">
+          <thead><tr><th>因素</th><th class="n">超额取消单</th><th class="n">极差</th><th>性质</th></tr></thead>
+          <tbody id="tbl-factors"></tbody>
+        </table>
+      </div>
+      <div class="stack reveal d1">
+        <div class="insight">
+          <div>
+            <h4>能被业务改变的，都已经被业务动作污染了</h4>
+            <p>「有停车位」的订单取消率是 <b>0.0%</b>（7,206 单），「提前 1 次取消过」的客人取消率是 <b>76.8%</b>。
+              前者说明酒店已经把车位留给了确定到店的客人，后者是风控的结果——两者都不是「原因」。</p>
+          </div>
+        </div>
+        <div class="insight">
+          <div>
+            <h4>取消发生的时点，比取消本身更可干预</h4>
+            <p>取消订单中 <b>46.2%</b> 发生在到达前 30 天以内，<b>19.4%</b> 在 7 天内。
+              这意味着再确认、担保、超售的窗口是存在的，只是不在预订那一刻，而在到达前不久。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 06 归因 ================= -->
+<section class="sec" id="structure">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num mono">06</span>
+      <h2>哪些是结构性的，哪些能干预</h2>
+      <p class="sec-lead">
+        同月对比（都取 1–8 月），取消率从 <b>25.86%</b> 升到 <b>32.22%</b>，涨了 <b>6.36 个百分点</b>。
+        现在把这 6.36 拆开：是客人换了，还是同一批客人变了？
+      </p>
+    </div>
+
+    <figure class="chart-card reveal">
+      <div class="chart" id="c-decomp"></div>
+      <figcaption>
+        每组总变化恒为 6.36pp，差别在于拆法。<b>结构效应</b>是客群构成变化带来的，
+        <b>组内效应</b>是同一群人行为变化带来的，<b>交互效应</b>是两者叠加。
+        六个维度里，组内效应最少的也占了 57%——增幅主要来自「同一群人变了」，不是「换了一群人」。
+      </figcaption>
+    </figure>
+
+    <div class="duo" style="margin-top:22px">
+      <div class="stack reveal">
+        <div class="insight">
+          <div>
+            <h4>客源国结构效应是负的：客人构成反而变「好」了</h4>
+            <p>按客源国分解，结构效应 <b>−1.14pp</b>，组内效应 +7.01pp。
+              也就是说，如果客群构成不变，取消率会涨得更多。用「客人变差了」来解释这次上涨，方向是错的。</p>
+          </div>
+        </div>
+        <div class="insight">
+          <div>
+            <h4>渠道：79% 的涨幅发生在同一渠道内部</h4>
+            <p>按市场细分分解，结构 +1.26pp、组内 +5.02pp。在线旅行社的占比只是微升，
+              真正变的是这个渠道内部的取消行为。</p>
+          </div>
+        </div>
+      </div>
+      <div class="stack reveal d1">
+        <div class="insight">
+          <div>
+            <h4>提前期是唯一「组内 + 结构」都很显著的维度</h4>
+            <p>结构效应 +1.77pp、组内 +3.64pp、交互 +0.95pp。两个方向同时在推：
+              订单结构更偏远期，且同一档提前期内的取消率也在上升。</p>
+          </div>
+        </div>
+        <div class="panel" style="padding:22px 24px">
+          <h3 style="font-size:13.5px;margin-bottom:14px">如果只做一件事：对远期单再确认</h3>
+          <div class="trio mini">
+            <div>
+              <span class="stat-k">覆盖单量</span>
+              <span class="stat-v num" style="font-size:22px">29,753<small>单</small></span>
+            </div>
+            <div>
+              <span class="stat-k">少取消</span>
+              <span class="stat-v num" style="font-size:22px">1,102<small>单</small></span>
+            </div>
+            <div>
+              <span class="stat-k">名义收入</span>
+              <span class="stat-v num" style="font-size:22px">57.7<small>万</small></span>
+            </div>
+          </div>
+          <p class="stat-d" style="margin-top:14px">
+            假设提前期 &gt; 90 天的订单取消率相对下降 10%。这是一个<b>假设值，不是实测</b>——
+            真实效果需要做对照实验才知道，这里只用来标定量级。
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 07 口径与边界 ================= -->
+<section class="sec" id="caveat">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num mono">07</span>
+      <h2>口径、陷阱与边界</h2>
+      <p class="sec-lead">
+        同一份数据能算出三种取消率。说清用的是哪一种，比算得准更重要。
+      </p>
+    </div>
+
+    <div class="caveat-grid">
+      <div class="panel reveal">
+        <h3>三个容易读错的口径陷阱</h3>
+        <p class="sub">数字本身没错，错的是把它当成了原因</p>
+        <table class="tbl">
+          <thead><tr><th>观察</th><th class="n">取消率</th><th class="n">单量</th></tr></thead>
+          <tbody>
+            <tr><td>押金类型 = 不可退款</td><td class="n strong num">94.70%</td><td class="n num">1,037</td></tr>
+            <tr><td>有停车位需求</td><td class="n strong num">0.00%</td><td class="n num">7,206</td></tr>
+            <tr><td>历史取消过 1 次</td><td class="n strong num">76.75%</td><td class="n num">1,368</td></tr>
+            <tr><td class="dim">对照：全盘</td><td class="n dim num">27.85%</td><td class="n dim num">85,585</td></tr>
+          </tbody>
+        </table>
+        <p class="stat-d" style="margin-top:16px">
+          三条都是<b>结果</b>而非<b>原因</b>：不可退款是取消后的处置方式；车位是酒店留给确定客人的；
+          历史取消记录本身就是风控依据。把它们当预测特征会得到虚高的准确率，上线即失效。
+        </p>
+      </div>
+
+      <div class="panel reveal d1">
+        <h3>五条口径，报告里必须照抄</h3>
+        <p class="sub">口径不一致时，数字差异远大于分析差异</p>
+        <div class="rule"><span class="i mono">01</span><span><b>取消率用 27.85%</b>，即清洗后 85,585 行的口径；含重复为 37.04%。</span></div>
+        <div class="rule"><span class="i mono">02</span><span><b>「取消」不纯</b>：其中 <span class="d">989 行是未到店（No-Show）</span>，需要区分时用 <code style="font-size:12px;background:#f2f6fa;padding:1px 5px;border-radius:4px">reservation_status</code>。</span></div>
+        <div class="rule"><span class="i mono">03</span><span><b>均价排除 0 值</b>：原始层有 1,959 行 adr 为 0，一律按 <span class="d">adr &gt; 0</span> 计算。</span></div>
+        <div class="rule"><span class="i mono">04</span><span><b>同比只用 1–8 月</b>：26 个月里只有 2016 是完整年，跨年比较固定取两年都有的月份。</span></div>
+        <div class="rule"><span class="i mono">05</span><span><b>小样本不单独下结论</b>：分组不足 30 单、交叉格不足 20 单不上图、不算率。</span></div>
+      </div>
+    </div>
+
+    <div class="panel reveal" style="margin-top:22px">
+      <h3>三条边界，决定了这些结论能走多远</h3>
+      <p class="sub">超出以下范围的推论，数据不支持</p>
+      <div class="duo" style="gap:0 40px">
+        <div class="rule"><span class="i mono">A</span><span><b>只有两家酒店。</b>所有结论限定在这两家（城市 / 度假），不能外推到行业。</span></div>
+        <div class="rule"><span class="i mono">B</span><span><b>没有酒店所在地区字段。</b>「地区」只能用客源国代替，门店区位差异无法量化。</span></div>
+        <div class="rule"><span class="i mono">C</span><span><b>没有房量分母。</b>只能讲均价与结构，讲不了入住率与客房收入。</span></div>
+        <div class="rule"><span class="i mono">D</span><span><b>没有实验，只有观察。</b>所有「可干预」都是相关性推断，不是因果结论。</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <div class="f-brand"><span class="brand-mark"></span> Hotel Insight</div>
+      <p>
+        客源结构、时间节奏、房型供给与取消归因的完整分析。
+        每个数字都由脚本从库中重算，notebook、图表与结论引用同一份中间结果——
+        改一个口径，三处一起变。
+      </p>
+    </div>
+    <div>
+      <h4>数据与方法</h4>
+      <ul>
+        <li>源数据：hotel.db（SQLite 单文件）</li>
+        <li>有效样本：85,585 条预订</li>
+        <li>结构分解：Kitagawa 三分解</li>
+        <li>区间估计：Wilson 95%</li>
+      </ul>
+    </div>
+    <div>
+      <h4>复核方式</h4>
+      <ul>
+        <li><code>python -m hotel_insight.pipeline</code></li>
+        <li><code>python -m pytest</code></li>
+        <li>六本分析 notebook 顺序执行</li>
+        <li>全部图表可由代码重新生成</li>
+      </ul>
+    </div>
+  </div>
+  <div class="f-bottom">
+    <span>数据窗口 2015-07 至 2017-08 · 两家酒店 · 176 个客源国家 / 地区</span>
+    <span>基于 hotel-insight 分析项目 · 2026</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var C = {
+    brand: '#1d6fa5', brand2: '#2e86c1', brand3: '#5ba3ce', brand4: '#9cc7e0',
+    brand5: '#cfe4f1', brand6: '#e8f2f9', deep: '#14486b', ink: '#0c1a28',
+    ink2: '#2c4256', muted: '#6c8199', faint: '#93a5b8', line: '#e3eaf2',
+    line2: '#eff4f9', ok: '#2f7d5f', warn: '#b45309'
+  };
+  var $ = function (s) { return document.querySelector(s); };
+  var fi = function (v) { return Math.round(v).toLocaleString('en-US'); };
+  var f1 = function (v) { return (Math.round(v * 10) / 10).toFixed(1); };
+
+  /* ---------------- 通用绘图工具 ---------------- */
+  function svgWrap(w, h, inner) {
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '" role="img" preserveAspectRatio="xMidYMid meet">' + inner + '</svg>';
+  }
+  function txt(x, y, s, o) {
+    o = o || {};
+    var a = 'x="' + x + '" y="' + y + '"';
+    if (o.anchor) a += ' text-anchor="' + o.anchor + '"';
+    if (o.size) a += ' font-size="' + o.size + '"';
+    if (o.fill) a += ' fill="' + o.fill + '"';
+    if (o.weight) a += ' font-weight="' + o.weight + '"';
+    if (o.spacing) a += ' letter-spacing="' + o.spacing + '"';
+    if (o.opacity) a += ' opacity="' + o.opacity + '"';
+    if (o.rotate) a += ' transform="rotate(' + o.rotate + ' ' + x + ' ' + y + ')"';
+    return '<text ' + a + '>' + s + '</text>';
+  }
+
+  /* ---------------- 01 清洗漏斗 ---------------- */
+  function funnel() {
+    var total = 119390, keep = 85585, dup = 31813, other = 1992;
+    var W = 760, H = 176, y = 48, h = 54;
+    var w1 = keep / total * W, w2 = dup / total * W, w3 = other / total * W;
+    var s = '';
+    s += txt(0, 28, '原始记录 ' + fi(total) + ' 条', { size: 13, fill: C.muted });
+    s += txt(W, 28, '进入分析 ' + fi(keep) + ' 条', { size: 13, fill: C.brand, anchor: 'end', weight: 600 });
+
+    s += '<rect x="0" y="' + y + '" width="' + w1 + '" height="' + h + '" rx="4" fill="' + C.brand + '"/>';
+    s += '<rect x="' + (w1 + 2) + '" y="' + y + '" width="' + (w2 - 2) + '" height="' + h + '" rx="3" fill="' + C.brand4 + '"/>';
+    s += '<rect x="' + (w1 + w2 + 2) + '" y="' + y + '" width="' + (w3 - 2) + '" height="' + h + '" rx="2" fill="' + C.brand5 + '"/>';
+
+    s += txt(w1 / 2, y + 25, fi(keep), { size: 23, fill: '#fff', anchor: 'middle', weight: 600, spacing: '-0.5' });
+    s += txt(w1 / 2, y + 43, '保留 71.7%', { size: 11.5, fill: '#eaf4fa', anchor: 'middle' });
+    s += txt(w1 + w2 / 2, y + 24, fi(dup), { size: 18, fill: '#14486b', anchor: 'middle', weight: 600 });
+    s += txt(w1 + w2 / 2, y + 42, '完全重复 26.6%', { size: 11, fill: '#2c5f80', anchor: 'middle' });
+
+    /* 第三段太窄，比例说明放在底部 */
+    s += txt(0, H - 6, '其余异常 1,992 条（1.7%）：① 无人入住 180　② 零晚数 645　③ 房价异常 1,167', { size: 11.5, fill: C.faint });
+    return svgWrap(W, H, s);
+  }
+
+  /* ---------------- 02 客源帕累托 ---------------- */
+  var ORIGIN = [
+    ['葡萄牙', 30.41, 36.99], ['英国', 12.10, 19.14], ['法国', 10.26, 19.70],
+    ['西班牙', 8.39, 25.92], ['德国', 6.27, 19.62], ['意大利', 3.56, 35.22],
+    ['爱尔兰', 3.52, 22.19], ['比利时', 2.42, 19.72], ['巴西', 2.31, 36.65],
+    ['荷兰', 2.23, 18.36], ['其他', 18.52, 27.50]
+  ];
+  function mix(a, b, t) {
+    var pa = a.match(/\w\w/g).map(function (x) { return parseInt(x, 16); });
+    var pb = b.match(/\w\w/g).map(function (x) { return parseInt(x, 16); });
+    return 'rgb(' + pa.map(function (v, i) { return Math.round(v + (pb[i] - v) * t); }).join(',') + ')';
+  }
+  function originChart() {
+    var W = 760, top = 34, rowH = 32, H = top + ORIGIN.length * rowH + 8;
+    var x0 = 80, maxW = 410, scale = maxW / 31.5;
+    var s = txt(700, 16, '取消率', { size: 11, fill: C.faint, anchor: 'end', spacing: '0.06em' });
+    ORIGIN.forEach(function (r, i) {
+      var y = top + i * rowH;
+      var w = Math.max(3, r[1] * scale);
+      var t = Math.min(1, Math.max(0, (r[2] - 18) / 20));
+      var col = mix('#cfe4f1', '#14486b', t);
+      var isOther = r[0] === '其他';
+      s += txt(6, y + 20, r[0], { size: 13, fill: isOther ? C.faint : C.ink2 });
+      s += '<rect x="' + x0 + '" y="' + (y + 8) + '" width="' + w + '" height="18" rx="3" fill="' + col + '"/>';
+      s += txt(x0 + w + 10, y + 21, f1(r[1]) + '%', { size: 12.5, fill: isOther ? C.faint : C.ink2, weight: 600 });
+      s += txt(700, y + 21, f1(r[2]) + '%', {
+        size: 12, anchor: 'end',
+        fill: r[2] > 32 ? C.brand : C.faint, weight: r[2] > 32 ? 600 : 400
+      });
+    });
+    return svgWrap(W, H, s);
+  }
+
+  /* ---------------- 03 季节指数 ---------------- */
+  var SEASON = [0.517, 0.791, 1.084, 1.068, 1.068, 0.998, 1.096, 1.265, 1.098, 1.196, 0.937, 0.883];
+  function seasonChart() {
+    var W = 560, H = 292, x0 = 44, x1 = 540, top = 34, base = 246;
+    var slot = (x1 - x0) / 12, bw = 24, scale = (base - top) / 1.4;
+    var s = '';
+    /* 1.0 参考线 */
+    var y1 = base - scale;
+    s += '<line x1="' + x0 + '" y1="' + y1 + '" x2="' + x1 + '" y2="' + y1 + '" stroke="' + C.brand3 +
+      '" stroke-width="1" stroke-dasharray="4 4" opacity=".55"/>';
+    s += txt(x1, y1 - 7, '全年均值 1.0', { size: 10.5, fill: C.brand3, anchor: 'end' });
+    s += '<line x1="' + x0 + '" y1="' + base + '" x2="' + x1 + '" y2="' + base + '" stroke="' + C.line + '"/>';
+
+    SEASON.forEach(function (v, i) {
+      var h = v * scale, x = x0 + i * slot + (slot - bw) / 2, y = base - h;
+      var col = v >= 1.1 ? C.brand : (v >= 1.0 ? C.brand3 : C.brand4);
+      s += '<rect x="' + x + '" y="' + y + '" width="' + bw + '" height="' + h + '" rx="3" fill="' + col + '"/>';
+      s += txt(x + bw / 2, base + 18, String(i + 1), { size: 11, fill: C.faint, anchor: 'middle' });
+      if (i === 0 || i === 7) {
+        s += txt(x + bw / 2, y - 8, v.toFixed(2), { size: 11.5, fill: C.ink2, anchor: 'middle', weight: 600 });
+      }
+    });
+    s += txt(x1, H - 4, '月份', { size: 10.5, fill: C.faint, anchor: 'end' });
+    return svgWrap(W, H, s);
+  }
+
+  /* ---------------- 03 周内节奏 ---------------- */
+  var DOW = [['周一', 27.0], ['周二', 24.7], ['周三', 26.0], ['周四', 28.1], ['周五', 31.0], ['周六', 30.4], ['周日', 26.8]];
+  function dowChart() {
+    var W = 560, H = 292, x0 = 44, x1 = 540, top = 40, base = 246;
+    var slot = (x1 - x0) / 7, bw = 30, scale = (base - top) / 35;
+    var s = '<line x1="' + x0 + '" y1="' + base + '" x2="' + x1 + '" y2="' + base + '" stroke="' + C.line + '"/>';
+    DOW.forEach(function (d, i) {
+      var h = d[1] * scale, x = x0 + i * slot + (slot - bw) / 2, y = base - h;
+      var col = d[1] >= 30 ? C.brand : (d[1] >= 27 ? C.brand3 : C.brand4);
+      s += '<rect x="' + x + '" y="' + y + '" width="' + bw + '" height="' + h + '" rx="3" fill="' + col + '"/>';
+      s += txt(x + bw / 2, y - 8, f1(d[1]), { size: 11.5, fill: C.ink2, anchor: 'middle', weight: 600 });
+      s += txt(x + bw / 2, base + 18, d[0], { size: 11, fill: C.faint, anchor: 'middle' });
+    });
+    s += txt(x0, 26, '取消率 %', { size: 10.5, fill: C.faint });
+    return svgWrap(W, H, s);
+  }
+
+  /* ---------------- 03 提前期 ---------------- */
+  var LEAD = [['≤ 7 天', 8.4], ['8–30 天', 25.6], ['31–90 天', 32.2], ['91–180 天', 35.1], ['181–365 天', 39.9], ['> 365 天', 41.9]];
+  function leadChart() {
+    var W = 760, H = 306, x0 = 72, x1 = 700, top = 44, base = 240;
+    var step = (x1 - x0) / (LEAD.length - 1), scale = (base - top) / 45;
+    var pts = LEAD.map(function (d, i) {
+      return [x0 + i * step, base - d[1] * scale, d[1]];
+    });
+    var s = '<defs><linearGradient id="leadFill" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="' + C.brand + '" stop-opacity=".16"/>' +
+      '<stop offset="100%" stop-color="' + C.brand + '" stop-opacity="0"/></linearGradient></defs>';
+
+    /* 横向参考线 */
+    [0, 10, 20, 30, 40].forEach(function (v) {
+      var y = base - v * scale;
+      s += '<line x1="' + x0 + '" y1="' + y + '" x2="' + x1 + '" y2="' + y + '" stroke="' + C.line2 + '"/>';
+      s += txt(x0 - 12, y + 4, v + '%', { size: 10.5, fill: C.faint, anchor: 'end' });
+    });
+
+    var area = 'M' + pts[0][0] + ',' + base + ' ' + pts.map(function (p) { return 'L' + p[0] + ',' + p[1]; }).join(' ') +
+      ' L' + pts[pts.length - 1][0] + ',' + base + ' Z';
+    s += '<path d="' + area + '" fill="url(#leadFill)"/>';
+    s += '<path d="' + pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0] + ',' + p[1]; }).join(' ') +
+      '" fill="none" stroke="' + C.brand + '" stroke-width="2.4" stroke-linejoin="round"/>';
+
+    pts.forEach(function (p, i) {
+      s += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="5.5" fill="#fff" stroke="' + C.brand + '" stroke-width="2.2"/>';
+      s += txt(p[0], p[1] - 15, p[2].toFixed(1) + '%', { size: 12.5, fill: C.deep, anchor: 'middle', weight: 600 });
+      s += txt(p[0], base + 20, LEAD[i][0], { size: 11.5, fill: C.muted, anchor: 'middle' });
+    });
+    s += txt(x0, base + 44, '提前期（从预订到入住的天数）', { size: 10.5, fill: C.faint });
+    return svgWrap(W, H, s);
+  }
+
+  /* ---------------- 04 房型 ---------------- */
+  var ROOM = [
+    ['A', 64.6, 94, 26.3], ['D', 20.1, 123, 30.4], ['E', 6.9, 128, 27.6],
+    ['F', 3.2, 173, 30.7], ['G', 2.3, 184, 37.1], ['B', 1.1, 93, 32.6],
+    ['C', 1.0, 164, 32.8], ['H', 0.7, 191, 41.2]
+  ];
+  function roomChart() {
+    var W = 620, top = 34, rowH = 34, H = top + ROOM.length * rowH + 14;
+    var x0 = 58, maxW = 260, scale = maxW / 64.6, bh = 18;
+    var colShare = x0 + maxW + 14;
+    var s = txt(450, 16, '平均房价', { size: 11, fill: C.faint, anchor: 'end', spacing: '0.04em' });
+    s += txt(570, 16, '取消率', { size: 11, fill: C.faint, anchor: 'end', spacing: '0.04em' });
+    ROOM.forEach(function (r, i) {
+      var y = top + i * rowH;
+      var w = Math.max(3, r[1] * scale);
+      var col = i === 0 ? C.brand : (i <= 2 ? C.brand3 : (r[2] >= 150 ? C.brand4 : C.brand5));
+      s += txt(14, y + 21, r[0], { size: 13.5, fill: C.ink, weight: 600 });
+      s += '<rect x="' + x0 + '" y="' + (y + 8) + '" width="' + w + '" height="' + bh + '" rx="3" fill="' + col + '"/>';
+      s += txt(colShare, y + 21, f1(r[1]) + '%', { size: 12.5, fill: C.ink2, weight: 600 });
+      s += txt(450, y + 21, Math.round(r[2]).toString(), { size: 12.5, fill: C.muted, anchor: 'end' });
+      s += txt(570, y + 21, f1(r[3]) + '%', {
+        size: 12.5, anchor: 'end', fill: r[3] >= 37 ? C.brand : C.muted, weight: r[3] >= 37 ? 600 : 400
+      });
+    });
+    return svgWrap(W, H, s);
+  }
+
+  /* ---------------- 05 因素象限 ---------------- */
+  var FACTORS = [
+    { n: '市场细分', v: 3952, k: 's', dx: 2, dy: -16, an: 'end' },
+    { n: '提前期', v: 3711, k: 'm', dx: 5, dy: 24, an: 'end' },
+    { n: '客源国', v: 3036, k: 's', dx: 0, dy: -16, an: 'middle' },
+    { n: '特殊要求', v: 2511, k: 'i', dx: 0, dy: -16, an: 'middle' },
+    { n: '停车位', v: 2007, k: 'i', dx: 0, dy: 24, an: 'middle' },
+    { n: '客群类型', v: 1867, k: 's', dx: 0, dy: -16, an: 'middle' },
+    { n: '改单次数', v: 1846, k: 'm', dx: 0, dy: -16, an: 'middle' },
+    { n: '到达月份', v: 1528, k: 's', dx: 10, dy: 24, an: 'start' },
+    { n: '酒店类型', v: 1365, k: 's', dx: 0, dy: -16, an: 'middle' },
+    { n: '房型', v: 859, k: 's', dx: 0, dy: 22, an: 'middle' },
+    { n: '押金类型', v: 693, k: 'q', dx: 0, dy: -16, an: 'middle' },
+    { n: '历史取消', v: 675, k: 'i', dx: 0, dy: -16, an: 'middle' }
+  ];
+  var BAND = { i: { y: 88, c: '#2f7d5f', t: '可干预' }, m: { y: 180, c: '#2e86c1', t: '混合' },
+               s: { y: 272, c: '#8a9cb0', t: '结构性' }, q: { y: 344, c: '#b45309', t: '需存疑' } };
+  function quadrantChart() {
+    var W = 820, H = 438, x0 = 104, x1 = 780, yT = 44, yB = 372;
+    var span = 4200, sx = (x1 - x0) / span;
+    var s = '';
+
+    /* 带分隔 */
+    [134, 226, 310].forEach(function (y) {
+      s += '<line x1="' + x0 + '" y1="' + y + '" x2="' + x1 + '" y2="' + y + '" stroke="' + C.line + '" stroke-dasharray="3 5"/>';
+    });
+    /* 纵轴四条带的标签 */
+    ['i', 'm', 's', 'q'].forEach(function (k) {
+      s += txt(x0 - 16, BAND[k].y + 4, BAND[k].t, { size: 12, fill: C.muted, anchor: 'end' });
+    });
+    s += txt(28, (yT + yB) / 2, '可干预性', { size: 11, fill: C.faint, anchor: 'middle', rotate: -90 });
+
+    /* x 轴网格与刻度 */
+    [0, 1000, 2000, 3000, 4000].forEach(function (v) {
+      var x = x0 + v * sx;
+      s += '<line x1="' + x + '" y1="' + yT + '" x2="' + x + '" y2="' + yB + '" stroke="' + C.line2 + '"/>';
+      s += txt(x, yB + 22, v === 0 ? '0' : fi(v), { size: 11, fill: C.faint, anchor: 'middle' });
+    });
+    s += txt(x1, yB + 46, '超额取消单', { size: 11, fill: C.faint, anchor: 'end' });
+
+    /* 空白区 */
+    var bx = x0 + 2715 * sx;
+    s += '<rect x="' + bx + '" y="' + (yT + 4) + '" width="' + (x1 - bx - 2) + '" height="126" rx="6" ' +
+      'fill="' + C.brand6 + '" fill-opacity=".55" stroke="' + C.brand3 + '" stroke-width="1" stroke-dasharray="5 5"/>';
+    s += txt(bx + (x1 - bx) / 2, yT + 46, '影响大 · 可改', { size: 13, fill: C.brand3, anchor: 'middle', weight: 600 });
+    s += txt(bx + (x1 - bx) / 2, yT + 68, '此区域为空', { size: 11.5, fill: C.faint, anchor: 'middle' });
+
+    /* 点 */
+    FACTORS.forEach(function (f) {
+      var x = x0 + f.v * sx, y = BAND[f.k].y;
+      s += '<circle cx="' + x + '" cy="' + y + '" r="6" fill="' + BAND[f.k].c + '" fill-opacity=".92" stroke="#fff" stroke-width="1.5"/>';
+      s += txt(x + f.dx, y + f.dy, f.n, { size: 11.5, fill: C.ink2, anchor: f.an });
+    });
+    return svgWrap(W, H, s);
+  }
+
+  /* ---------------- 06 六维度分解 ---------------- */
+  var DECOMP = [
+    { n: '市场细分', s: 1.26, w: 5.02, x: 0.08 },
+    { n: '客源国', s: -1.14, w: 7.01, x: 0.49 },
+    { n: '提前期', s: 1.77, w: 3.64, x: 0.95 },
+    { n: '客群类型', s: 0.49, w: 5.58, x: 0.29 },
+    { n: '酒店类型', s: 0.05, w: 6.31, x: 0.00 },
+    { n: '房型', s: 0.01, w: 6.29, x: 0.06 }
+  ];
+  function decompChart() {
+    var W = 820, top = 56, rowH = 58, H = top + DECOMP.length * rowH + 56;
+    var x0 = 104, x1 = 780, lo = -2, hi = 8.5;
+    var sc = (x1 - x0) / (hi - lo), zx = x0 - lo * sc;
+    var s = '';
+
+    /* 图例 */
+    var lx = x0;
+    [[C.deep, '结构效应'], [C.brand, '组内效应'], [C.brand4, '交互效应']].forEach(function (L) {
+      s += '<rect x="' + lx + '" y="22" width="10" height="10" rx="2" fill="' + L[0] + '"/>';
+      s += txt(lx + 16, 31, L[1], { size: 11.5, fill: C.muted });
+      lx += 16 + L[1].length * 12 + 26;
+    });
+
+    /* 零线 */
+    s += '<line x1="' + zx + '" y1="' + (top - 10) + '" x2="' + zx + '" y2="' + (H - 30) + '" stroke="' + C.brand3 +
+      '" stroke-width="1.2" stroke-dasharray="4 4" opacity=".7"/>';
+
+    DECOMP.forEach(function (d, i) {
+      var yc = top + i * rowH + 20;
+      s += txt(6, yc + 3, d.n, { size: 13, fill: C.ink2 });
+      var items = [[d.s, C.deep], [d.w, C.brand], [d.x, C.brand4]];
+      items.forEach(function (it, j) {
+        var v = it[0], y = yc - 19 + j * 14;
+        var x = v >= 0 ? zx : zx + v * sc;
+        var w = Math.abs(v) * sc;
+        if (w < 1.2) return;
+        s += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="9" rx="2" fill="' + it[1] + '"/>';
+        if (w > 26) {
+          s += txt(v >= 0 ? x + w + 6 : x - 6, y + 8, (v > 0 ? '+' : '−') + Math.abs(v).toFixed(2), {
+            size: 10.5, fill: C.muted, anchor: v >= 0 ? 'start' : 'end'
+          });
+        }
+      });
+    });
+
+    /* x 轴 */
+    var yAxis = H - 34;
+    [-2, 0, 2, 4, 6, 8].forEach(function (v) {
+      var x = zx + v * sc;
+      s += txt(x, yAxis, (v > 0 ? '+' : '') + v, { size: 10.5, fill: C.faint, anchor: 'middle' });
+    });
+    s += txt(x1, H - 10, '单位：个百分点（pp）', { size: 10.5, fill: C.faint, anchor: 'end' });
+    return svgWrap(W, H, s);
+  }
+
+  /* ---------------- 渲染 ---------------- */
+  $('#c-funnel').innerHTML = funnel();
+  $('#c-origin').innerHTML = originChart();
+  $('#c-season').innerHTML = seasonChart();
+  $('#c-dow').innerHTML = dowChart();
+  $('#c-lead').innerHTML = leadChart();
+  $('#c-room').innerHTML = roomChart();
+  $('#c-quadrant').innerHTML = quadrantChart();
+  $('#c-decomp').innerHTML = decompChart();
+
+  /* 因素表 */
+  var KIND = { s: ['tag s', '结构性'], m: ['tag m', '混合'], i: ['tag i', '可干预'], q: ['tag q', '需存疑'] };
+  var RANGE = {
+    '市场细分': 27.5, '提前期': 33.4, '客源国': 22.2, '特殊要求': 28.2, '停车位': 30.4,
+    '客群类型': 23.2, '改单次数': 17.3, '到达月份': 11.1, '酒店类型': 6.7, '房型': 14.9,
+    '押金类型': 70.4, '历史取消': 49.7
+  };
+  var rows = FACTORS.slice().sort(function (a, b) { return b.v - a.v; }).map(function (f) {
+    var k = KIND[f.k];
+    return '<tr><td>' + f.n + '</td><td class="n strong num">' + fi(f.v) + '</td>' +
+      '<td class="n num" style="padding-right:22px">' + RANGE[f.n].toFixed(1) + '</td>' +
+      '<td><span class="' + k[0] + '">' + k[1] + '</span></td></tr>';
+  }).join('');
+  $('#tbl-factors').innerHTML = rows;
+
+  /* ---------------- 动效 ---------------- */
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* 数字滚动 */
+  function countUp(el) {
+    var target = parseFloat(el.dataset.count);
+    var dec = +(el.dataset.dec || 0);
+    if (reduce || !isFinite(target)) {
+      el.textContent = dec ? target.toFixed(dec) : fi(target);
+      return;
+    }
+    var t0 = performance.now(), dur = 1200;
+    var final = dec ? target.toFixed(dec) : fi(target);
+    /* 兜底：rAF 被环境打断时（后台标签页、无头渲染）也要落到终值 */
+    setTimeout(function () { el.textContent = final; }, dur + 500);
+    function step(t) {
+      /* rAF 时间戳与 performance.now 不是同一时基时 t-t0 可能为负，
+         必须双向 clamp，否则会出现负数和超过目标值 */
+      var p = Math.min(1, Math.max(0, (t - t0) / dur));
+      var e = 1 - Math.pow(1 - p, 3);
+      el.textContent = dec ? (target * e).toFixed(dec) : fi(target * e);
+      if (p < 1) {
+        requestAnimationFrame(step);
+      } else {
+        el.textContent = dec ? target.toFixed(dec) : fi(target);
+      }
+    }
+    requestAnimationFrame(step);
+  }
+  /* 数字滚动：首屏即可见，直接启动；不依赖 IntersectionObserver，
+     否则在部分环境（无头浏览器、禁用合成器的场景）会一直停在 0 */
+  var kpis = document.querySelectorAll('[data-count]');
+  Array.prototype.forEach.call(kpis, function (k, i) {
+    setTimeout(function () { countUp(k); }, 80 + i * 90);
+  });
+
+  /* 淡入 */
+  var reveals = document.querySelectorAll('.reveal');
+  function showAll() {
+    Array.prototype.forEach.call(reveals, function (el) { el.classList.add('in'); });
+  }
+  if ('IntersectionObserver' in window && !reduce) {
+    var ro = new IntersectionObserver(function (es) {
+      es.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add('in'); ro.unobserve(en.target); }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -6% 0px' });
+    Array.prototype.forEach.call(reveals, function (el) { ro.observe(el); });
+    /* 兜底：观察器异常或被环境禁用时，不能留下空白页面 */
+    setTimeout(showAll, 3000);
+  } else {
+    showAll();
+  }
+
+  /* 进度条 + 导航状态 */
+  var nav = $('#nav'), bar = $('#progress'), links = Array.prototype.slice.call(document.querySelectorAll('#navlinks a'));
+  var secs = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  function onScroll() {
+    var st = window.scrollY || document.documentElement.scrollTop;
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (h > 0 ? (st / h * 100) : 0) + '%';
+    nav.classList.toggle('solid', st > 8);
+    var idx = -1;
+    secs.forEach(function (s, i) {
+      if (s && s.getBoundingClientRect().top <= 120) idx = i;
+    });
+    links.forEach(function (a, i) { a.classList.toggle('active', i === idx); });
+  }
+  var ticking = false;
+  window.addEventListener('scroll', function () {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(function () { onScroll(); ticking = false; });
+    }
+  }, { passive: true });
+  onScroll();
+})();
+</script>
+</body>
+</html>
