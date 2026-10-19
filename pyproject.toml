@@ -1,6 +1,6 @@
 [project]
 name = "hotel-insight"
-version = "0.1.0"
+version = "2.0.0"
 description = "酒店预订数据集的数据质量评估：字段画像、16 项稽核、四步清洗与可追溯流水线"
 readme = "README.md"
 requires-python = ">=3.12"
